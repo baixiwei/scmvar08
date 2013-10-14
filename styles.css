@@ -1,0 +1,95 @@
+/*	css reset from:
+	http://meyerweb.com/eric/tools/css/reset/ 
+	v2.0 | 20110126
+	License: none (public domain)
+*/
+
+table {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	font-size: 100%;
+	font: inherit;
+	vertical-align: baseline;
+	border-collapse: collapse;
+	border-spacing: 0;
+}
+
+img {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	font-size: 100%;
+	font: inherit;
+	vertical-align: baseline;
+}
+
+/* general-purpose css */
+
+em {
+    background-color: #FFFF00
+}
+
+/* target is the id of the window where the experiment appears.
+Everything below target is contained inside target and so should be <= in size. */
+
+#target { 
+    width: 1200px; 
+    margin-left:auto; 
+    margin-right:auto;
+    margin-top: 40px;
+    font-family:"Times New Roman", Times, serif;
+    font-size: 16px; 
+    text-align: left;
+}
+
+
+/* question and box are used to highlight instructional text in different ways. */
+
+.question{
+    border-style: solid;
+    border-width: 1px;
+    background-color: LightGrey;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+.box {
+/*    text-align: center;*/
+    border-style: solid;
+    border-width: 1px;
+    background-color: LightSteelBlue;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    margin-left: 50px;
+    margin-right: 50px;
+    padding-left: 10px;
+    padding-right: 10px;
+    width: 700px;
+}
+
+.icon {
+    height: 60px;
+}
+
+.ui-widget {
+    font-family:"Times New Roman", Times, serif;
+    font-size: 18px;
+}
+
+.ui-state-default {
+    font-family:"Times New Roman", Times, serif;
+    font-size: 18px;
+}
+
+/* The following styles are used when giving feedback during training. */
+
+.incorrect {
+    background-color: #ef3d47;
+}
+
+.incorrect_feedback {
+    background-color: #fbc97f;
+}
