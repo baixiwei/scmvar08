@@ -7,18 +7,12 @@
 // switch to determine whether lots of info should be sent to console
 var VERBOSE             = true;
 
-// switch to determine which kind of variation is used
-var PCO_AND_OSS         = 0;
-var OAPlc_AND_ROAPlc    = 1;
-var VARIATION_TYPE      = PCO_AND_OSS;
-// var VARIATION_TYPE     = OAPlc_AND_ROAPlc;
-
 
 //////////////////////////////////
 // makeExpStruct
 //////////////////////////////////
 
-function makeExpStruct( condVariation, condVersion, condTestSeq, sections, mode ) {
+function makeExpStruct( condVariation, condVersion, condTestSeq, yokingSeq, sections, mode ) {
 
     // generate test stimuli according to experimental condition
     // these are generated in advance because the randomization decisions made are shared across sections
@@ -28,7 +22,7 @@ function makeExpStruct( condVariation, condVersion, condTestSeq, sections, mode 
     var exp_struct = [];
     if ( sections.indexOf( "Intro" ) != -1 )    { addIntro( exp_struct, mode ); }
     if ( sections.indexOf( "Pretest" ) != -1 )  { addTest( exp_struct, mode, "Pretest", questions_test["Pretest"] ); }
-    if ( sections.indexOf( "Training" ) != -1 ) { addTraining( exp_struct, mode, condVariation, condVersion ); }
+    if ( sections.indexOf( "Training" ) != -1 ) { addTraining( exp_struct, mode, condVariation, condVersion, yokingSeq ); }
     if ( sections.indexOf( "Posttest" ) != -1 ) { addTest( exp_struct, mode, "Posttest", questions_test["Posttest"] ); }
     if ( sections.indexOf( "Background" ) != -1 ) { addBackground( exp_struct, mode ); }
     
@@ -192,9 +186,9 @@ var generateTrainingFeedback = function( accuracies, mode ) {
         feedback.delay      = { "auto": 0, "free": 500, "forced": 7500 }[ mode ];
     } else {
         if ( 3-sum(accuracies) == 1 ) {
-            feedback.overall    = "<p><img src='images/small-red-x-mark-th.png' class='icon'>  Sorry, one of your answers is incorrect.</p><p>The incorrect answer has been highlighted, and an explanation of why it is incorrect is displayed to the right.</p><p>Please read the explanation, then change your answer to the correct answer and click 'Submit' again.</p>";
+            feedback.overall    = "<p><img src='images/small-red-x-mark-th.png' class='icon'>  Sorry, one of your answers is incorrect.</p><p>The incorrect answer has been highlighted, and an explanation of why it is incorrect is displayed to the right. After reading the explanation, click 'Try again,' and the page will be reloaded with different numbers and the order of answers randomized.</p><p>The 'Try again' button will activate after a delay so that you have time to read the explanation.</p>";
         } else {
-            feedback.overall    = "<p><img src='images/small-red-x-mark-th.png' class='icon'>  Sorry, some of your answers are incorrect.</p><p>The incorrect answers have been highlighted, and explanations of why they are incorrect are displayed to the right.</p><p>Please read the explanations, then change your answers to the correct answers and click 'Submit' again.</p>";
+            feedback.overall    = "<p><img src='images/small-red-x-mark-th.png' class='icon'>  Sorry, some of your answers are incorrect.</p><p>The incorrect answers have been highlighted, and explanations of why they are incorrect are displayed to the right. Please read the explanations, click 'Try again,' and the page will be reloaded with different numbers and the order of answers randomized.</p><p>The 'Try again' button will activate after a delay so that you have time to read the explanations.</p>";
         }
         for ( var i=0; i<accuracies.length; i++ ) {
             if ( accuracies[i]==0 ) {
@@ -210,9 +204,9 @@ var generateTrainingFeedback = function( accuracies, mode ) {
     return feedback;
 }
 
-// getTrainingQuestionsBySchema
+// getTrainingQuestions
 //      provides the entire set of training examples used in all conditions, organized by schema
-function getTrainingQuestionsBySchema() {
+function getTrainingQuestions() {
 
     var questions_by_schema = {};
     
@@ -419,6 +413,29 @@ function getTrainingQuestionsBySchema() {
     return questions_by_schema;
 }
 
+// getTrainingQuestionsBySchema
+//      returns a certain number of training questions all drawn from a given schema ordered randomly
+function getTrainingQuestionsBySchema( schema, num_questions ) {
+    return( shuffle( getTrainingQuestions()[schema] ).slice(0,num_questions) );
+}
+
+// getTrainingQuestionsByIds
+//      given an array of question ids, returns an array of the corresponding questions
+function getTrainingQuestionsByIds( quesIDs ) {
+    var questions_by_schema = getTrainingQuestions();
+    var original_questions = [];
+    for ( var schema in questions_by_schema ) {
+        original_questions = original_questions.concat( questions_by_schema[schema] );
+    }
+    var filtered_questions = new Array( quesIDs.length );
+    for ( var i=0; i<original_questions.length; i++ ) {
+        if ( quesIDs.indexOf( original_questions[i].quesID ) != -1 ) {
+            filtered_questions[ quesIDs.indexOf( original_questions[i].quesID ) ] = original_questions[i];
+        }
+    }
+    return filtered_questions;
+}
+
 // getTestQuestionsBySet
 //      provides all test questions, organized by question set
 function getTestQuestionsBySet() {
@@ -497,46 +514,10 @@ function getTestQuestionsBySet() {
     return test_question_sets;
 }
 
-// generateTrainingQuestionSet
-//      selects a subset of training examples appropriate to experimental condition
-//      and instantiates them so they can be used by the scmvar_training plugin
-function generateTrainingQuestionSet( condVariation, condVersion ) {
-    // retrieve all training questions
-    var questions_by_schema     = getTrainingQuestionsBySchema();
-    if ( VARIATION_TYPE==PCO_AND_OSS ) {
-        var num_questions    = questions_by_schema["PCO"].length;
-        if ( condVariation=="Nonvaried" ) {
-            // if in Nonvaried condition, select either all PCO or all OSS questions and shuffle them
-            var questions = shuffle( questions_by_schema[ [ "PCO", "OSS" ][ condVersion ] ] );
-        } else if ( condVariation=="Varied" ) {
-            // if in Varied condition, select half of PCO and half of OSS questions, shuffle them, and interleave PCO and OSS
-            var questions1 = shuffle( questions_by_schema[ [ "PCO", "OSS" ][ condVersion ] ] ).slice(0,num_questions/2);
-            var questions2 = shuffle( questions_by_schema[ [ "OSS", "PCO" ][ condVersion ] ] ).slice(0,num_questions/2);
-            var questions = interleave( questions1, questions2 );
-        }
-    } else if ( VARIATION_TYPE==OAPlc_AND_ROAPlc ) {
-        // The code below was used in an earlier version of the experiment to pick out a mixture of OAPlc/ROAPlc and PCO examples.
-        // It is retained here in case I ever want to go back to that version
-        // now use training and condVersion to pick out a subset of OAPlc and/or ROAPlc example questions and shuffle them
-        if ( condVariation=="Nonvaried" ) {      // all 4 questions of either OAPlc or ROAPlc
-            // if in Nonvaried condition, select either all PCO or all OSS questions and shuffle them
-            var questions1  = shuffle( questions_by_schema[ [ "OAPlc", "ROAPlc" ][ condVersion ] ] );
-        } else if ( condVariation=="Varied" ) {  // 2 random OAPlc questions and the corresponding ROAPlc ones
-            // if in Varied condition, select two pairs of OAPlc and ROAPlc questions
-            var schemas     = [ [ "OAPlc", "ROAPlc" ], [ "ROAPlc", "OAPlc" ] ][ condVersion ];
-            var order       = shuffle([0,1,2,3]);
-            var questions1  = [ questions_by_schema[schemas[0]][order[0]],
-                                questions_by_schema[schemas[1]][order[0]],
-                                questions_by_schema[schemas[0]][order[1]],
-                                questions_by_schema[schemas[1]][order[1]] ];
-        }
-        var questions2      = shuffle( questions_by_schema["PCO"] ).slice(0,2);
-        var questions       = questions1.concat( questions2 );
-    }
-    // instantiate all questions as long version
-    for ( var i=0; i<questions.length; i++ ) questions[i].instantiate( "long" );
-    return questions;
-}
+
+//////////////////////////////////
+// Pretest and Posttest
+//////////////////////////////////
 
 // generateTestQuestionSets
 //      selects one of the test question sets to be pretest and the other to be posttest
@@ -545,11 +526,6 @@ function generateTestQuestionSets( condTestSeq ) {
     var test_question_sets = getTestQuestionsBySet();
     return( { "Pretest": test_question_sets[ condTestSeq ], "Posttest": test_question_sets[ (condTestSeq+1)%2 ] } );
 }
-
-
-//////////////////////////////////
-// Pretest and Posttest
-//////////////////////////////////
 
 function addTest( exp_struct, mode, test_section, questions ) {
 
@@ -573,7 +549,7 @@ function addTest( exp_struct, mode, test_section, questions ) {
 // Training
 //////////////////////////////////////////////////////
 
-function addTraining(  exp_struct, mode, condVariation, condVersion ) {
+function addTraining( exp_struct, mode, condVariation, condVersion, yokingSeq ) {
 
     // unselect subsections of training if desired (for testing only)
     var subsections = { "exposition": false, "examples": true, "concept": false, "conclusion": false };
@@ -582,7 +558,7 @@ function addTraining(  exp_struct, mode, condVariation, condVersion ) {
     
     // add selected subsections to experiment structure
     if ( subsections.exposition )   { addTrainingExposition( exp_struct, mode, condVariation, condVersion ); }
-    if ( subsections.examples )     { addTrainingExamples( exp_struct, mode, condVariation, condVersion ); }
+    if ( subsections.examples )     { addTrainingExamples( exp_struct, mode, condVariation, condVersion, yokingSeq ); }
     if ( subsections.concept )      { addConceptInduction( exp_struct, mode ); }
     if ( subsections.conclusion )   { addTrainingConclusion( exp_struct, mode ); }
 }
@@ -596,7 +572,7 @@ function addTrainingExposition( exp_struct, mode, condVariation, condVersion ) {
     //  added last page of exposition to transition to training examples
     //  removed <p>Press <strong>ENTER</strong> to continue.</p> and similar
     
-    // NOTE: NOT currently equipped to handle any variation type other than PCO_AND_OSS!
+    // NOTE: currently requires first example to be either PCO or OSS!
 
     var text_list;
     var firstExampleSchema = [ "PCO", "OSS" ][ condVersion ];
@@ -620,93 +596,40 @@ function addTrainingExposition( exp_struct, mode, condVariation, condVersion ) {
     addTextBlock( exp_struct, mode, "Training Exposition", text_list )
 }
 
-// trainingQuestionSelector class
-//  used to generate questions dynamically based on past performance during training
-trainingQuestionSelector = function( condVariation, condVersion ) {
-    if ( VERBOSE ) { console.log("trainingParamsGenerator constructor running ..."); }
-    this.condVariation          = condVariation;
-    this.condVersion            = condVersion;
-    var questions_by_schema     = getTrainingQuestionsBySchema();
-    for ( key in questions_by_schema ) { shuffle( questions_by_schema[key] ); }
-    this.questions_by_schema    = questions_by_schema;
-    this.prev_question          = false;
-    this.flag_idx               = 0;
-    this.select                 = selectTrainingQuestion;
-}
-
-// checkCriterion( block_data, start_idx )
-//  was accuracy criterion reached over the past N trials in block_data,
-//  excluding those occurring before start_idx
-var checkCriterion = function( block_data, start_idx ) {
-    start_idx = ( start_idx==undefined ) ? 0 : start_idx;
-    var window_size = 2;
-    if ( ( block_data.length - window_size ) < start_idx ) {
-        if ( VERBOSE ) { console.log( "checkCriterion running ... accuracy window still too small" ); }
-        return false;
-    } else {
-        var data = block_data.slice( block_data.length-window_size, block_data.length );
-        var accuracies = field( data, "mult_accuracies" );
-        var min_accuracy = Math.min.apply( null, field( data, "accuracy" ) );
-        if ( VERBOSE ) { console.log( "checkCriterion running ... accuracy window: " + accuracies.toString() + "; min_accuracy: " + min_accuracy.toFixed(2) ); }
-        return ( min_accuracy==1.0 );
+/*
+Here's the behavior we want. condVariation can take 4 values: Nonvaried, Adaptive Varied, Yoked Varied, and Yoked Shuffled.
+1. Nonvaried. Select one schema, choose 18 examples from that schema, randomly shuffle.
+2. Adaptive Varied. Select one schema, choose examples from that schema until 3 in a row correct, then choose interleaved from all 3 schemas.
+3. Yoked Varied. Follow the same sequence of examples as in the yoking sequence.
+4. Yoked Shuffled. Randomize the sequence of examples in the yoking sequence and follow that.
+So really, only 2. requires real-time selection for each trial - the other 3 are determined in advance.
+*/
+function addTrainingExamples( exp_struct, mode, condVariation, condVersion, yokingSeq ) {
+    var num_questions       = 6;                        // testing only; eventually change to 18
+    var training_schemas    = [ "PCO", "OSS" ];         // testing only; eventually add "TFR"
+    switch ( condVariation ) {
+        case "Nonvaried" :
+            var schema      = training_schemas[ condVersion ];
+            var questions   = ( shuffle( getTrainingQuestions()[ schema ] ) ).slice( 0, num_questions );
+            break;
+        case "Adaptive Varied" :
+            var schemas = reorderFromIdx( training_schemas, condVersion );
+            var questions   = [];
+            for ( var i=0; i<schemas.length; i++ ) {
+                questions.push( shuffle( getTrainingQuestions()[ schemas[i] ] ).slice( 0, num_questions ) );
+            }
+            break;
+        case "Yoked Varied" :
+            var questions   = getTrainingQuestionsByIds( yokingSeq );
+            break;
+        case "Yoked Shuffled" :
+            var questions   = shuffle( getTrainingQuestionsByIds( yokingSeq ) );
+            break;
     }
-}
-
-var selectTrainingQuestion = function( trial_idx, block_data ) {
-    if ( VERBOSE ) { console.log( "selectTrainingQuestion running ..." ); }
-    var schemas = [ "PCO", "OSS" ];
-    // first determine which schema the new question should belong to
-    if ( this.prev_question==false ) {
-        // the schema of the first question is determined by condVersion
-        var next_schema = schemas[ this.condVersion ];
-    } else {
-        // otherwise the schema depends on condition and performance
-        switch( this.condVariation ) {
-            case "Nonvaried":
-                // the same schema is used for all training problems
-                var next_schema = schemas[ this.condVersion ];
-                break;
-            case "Varied":
-                // in the varied condition, the schema changes with each training problem
-                var next_schema = nextEl( schemas, this.prev_question.schema );
-                break;
-            case "Adaptive Variation":
-                // the adaptive variation condition acts as nonvaried until criterion is met, and then as varied
-                if ( this.flag_idx>0 ) {
-                    // criterion has been met before, so we switch schema every trial
-                    var next_schema = nextEl( schemas, this.prev_question.schema );
-                } else if ( checkCriterion( block_data ) ) {
-                    // criterion was met on the most recent trial, so we start switching now
-                    this.flag_idx = trial_idx;
-                    var next_schema = nextEl( schemas, this.prev_question.schema );
-                } else {
-                    // criterion has not been met, so we use the same schema as the first trial
-                    var next_schema = schemas[ this.condVersion ];
-                }
-                break;
-            case "Adaptive Retirement":
-                // the adaptive retirement condition acts as nonvaried until criterion is met, then as varied (and resets criterion counter when this happens)
-                if ( checkCriterion( block_data, this.flag_idx ) ) {
-                    var next_schema = nextEl( schemas, this.prev_question.schema );
-                    this.flag_idx   = trial_idx;
-                } else {
-                    var next_schema  = this.prev_question.schema
-                }
-                break;
-        }
-    }
-    // pop a question of the appropriate schema from the question list, save it, return it
-    var question        = this["questions_by_schema"][ next_schema ].pop();
-    this.prev_question  = question;
-    return question;
-}
-
-function addTrainingExamples( exp_struct, mode, condVariation, condVersion ) {
-    var tqs = new trainingQuestionSelector( condVariation, condVersion );
-    var num_questions = 6;
+    var tqs = new trainingQuestionSelector( condVariation, questions );
     exp_struct.push( { "type": "scmvar_training", "mode": mode, "progress": true, "feedback": true, "num_questions": num_questions, "selector": tqs } );
 }
-
+    
 function addConceptInduction( exp_struct, mode ) {
     // based on Exp 6 version, but modified to use language consistent with Exp 3 exposition
     var text = [
@@ -725,6 +648,56 @@ function addConceptInduction( exp_struct, mode ) {
 
 function addTrainingConclusion( exp_struct, mode ) {
     addTextBlock( exp_struct, mode, "Training Conclusion", [ "<p><img src='images/smiley20face_thumbsup.jpg'></p><p>Congratulations! You've finished the 3rd part of the study. Just one part left!</p><p>In the last part, you'll solve 12 more problems like those you've seen so far. A progress bar at the top will show you how many you've completed and how many you have left. This time, you won't get any feedback.</p><p>Take a break if you like, and continue when you're ready.</p>" ] );
+}
+
+////////////////////////////////////////////////////////////
+// Training Question Selector used by addTrainingExamples
+////////////////////////////////////////////////////////////
+
+// trainingQuestionSelector class
+//  used to generate questions dynamically based on past performance during training
+trainingQuestionSelector = function( condVariation, questions ) {
+    if ( VERBOSE ) { console.log("trainingParamsGenerator constructor running ..."); }
+    // store input variables
+    this.condVariation  = condVariation;
+    this.questions      = questions;
+    // for adaptive variation condition, record that criterion has not been met
+    this.criterionIdx   = -1;
+    // selector will pick out the next question
+    this.select         = selectTrainingQuestion;
+}
+
+// checkCriterion( block_data, start_idx )
+//  was accuracy criterion reached over the past window_size trials in block_data,
+//  excluding those occurring before start_idx
+var checkCriterion = function( block_data, window_size, start_idx ) {
+    start_idx = ( start_idx==undefined ) ? 0 : start_idx;
+    if ( ( block_data.length - window_size ) < start_idx ) {
+        if ( VERBOSE ) { console.log( "checkCriterion running ... accuracy window still too small" ); }
+        return false;
+    } else {
+        var data = block_data.slice( block_data.length-window_size, block_data.length );
+        var accuracies = field( data, "mult_accuracies" );
+        var min_accuracy = Math.min.apply( null, field( data, "accuracy" ) );
+        if ( VERBOSE ) { console.log( "checkCriterion running ... accuracy window: " + accuracies.toString() + "; min_accuracy: " + min_accuracy.toFixed(2) ); }
+        return ( min_accuracy==1.0 );
+    }
+}
+
+var selectTrainingQuestion = function( trial_idx, block_data ) {
+    if ( VERBOSE ) { console.log( "selectTrainingQuestion running ..." ); }
+    if ( this.condVariation=="Adaptive Varied" ) {
+        if ( this.criterionIdx>0 ) {
+            return this.questions[ (trial_idx-this.criterionIdx+1)%(this.questions.length) ][ trial_idx ];
+        } else if ( checkCriterion( block_data, 2 ) ) {     // testing only; change to 3 for the real thing
+            this.criterionIdx = trial_idx;
+            return this.questions[ (trial_idx-this.criterionIdx+1)%(this.questions.length) ][ trial_idx ];
+        } else {
+            return this.questions[ 0 ][ trial_idx ];
+        }
+    } else {
+        return this.questions[ trial_idx ];
+    }
 }
 
 //////////////////////////////////////////////////////

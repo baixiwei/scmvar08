@@ -1,16 +1,20 @@
-Conditions:
-    Nonvaried
-    Adaptively varied
-    Yoked random
-    Yoked blocked
-    Yoked identical
-    
-Choose condition
+x training interface: feedback per question would be shown and then the page regenerated and you have to do again
+x   On incorrect answer, highlight incorrects with margin explanations, and give popup explanation, as now.
+x   Text of popup explanation should be changed to say read and then click continue to regenerate, with continue button active only after a pause.
+x   Disable radio buttons during this time, change submit to continue, reactivate after pause, set to regenerate page.
 
-    If condition is nonvaried, counterbalance which schema is shown
-    
-    If condition is adaptively varied, counterbalance among all possible schema orders
-    
+x set up code for 4 conditions, with variation increasing from 1 schema (PCO) to 3 (PCO, OSS, TFR) after 3 in a row correct
+    OR: counterbalance among schemas for nonvaried, and among schema orders for adaptively varied? Depends on outcome of validation.
+
+- set up PHP code for condition assignment & yoking
+    Conditions: adaptive variation, yoked random, yoked identical, nonvaried
     If condition is any of yoked, make sure the existing completions for that condition are < those for adaptively varied, and if not, choose another condition
     (We want to ensure that each sid in the adaptively varied condition gets yoked equally often in each of the yoked conditions.)
 
+- 18 questions during training
+
+- check whether the consistency of "options/selections" prompt with "for each/one of" prompt is <80% in previous studies, if so, include that prompt
+
+- consider changing terminology to "selection events"
+
+- add additional training questions, create explanations for them, revamp variation conditions to account for them

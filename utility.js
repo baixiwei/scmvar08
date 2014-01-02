@@ -141,6 +141,18 @@ var interleave = function( l, m ) {
     }
     return result;
 }
+
+// reorderFromIdx: given an array, return an array containing the same elements but starting from idx and cycling from there in order
+function reorderFromIdx( arr, idx ) {
+    var result = [];
+    for ( var i=0; i<arr.length; i++ ) {
+        result.push( arr[ (idx+i)%(arr.length) ] );
+    }
+    return result;
+}
+
+
+
 // field: given an array of objects, return an array of a designated property of those objects
 function field( objects, property_name ) {
     var result = [];

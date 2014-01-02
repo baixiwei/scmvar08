@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <title>SCMVAR Experiment 8</title>
+
+    <script src="jquery-1.8.3.min.js"   type="text/javascript"></script>
+    <script src="jquery-ui.js"          type="text/javascript"></script>
+    <link href="jquery-ui.css"          type="text/css" rel="stylesheet">
+    <script src="jspsych-revised.js"    type="text/javascript"></script>
+    <script src="jspsych-survey.js"     type="text/javascript"></script>
+    <script src="jspsych-scmvar.js"     type="text/javascript"></script>
+    <script src="utility.js"            type="text/javascript"></script>
+    <script src="hallway.js"            type="text/javascript"></script>
+    <script src="experiment.js"         type="text/javascript"></script>
+    
+    <link href="styles.css"             type="text/css" rel="stylesheet">
+    
+</head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+
+<body>
+	<div id="target">
+	</div>
+</body>
+
+<script type="text/javascript">
+
+// global variables for controlling experiment settings, set below
+var override;   // whether default settings of other globals are overridden for testing purposes
+var offline;    // boolean, determines whether database & php scripts used at all
+var testing;    // boolean, determines which database is used and some other aspects of how exp runs
+var mode;       // forced, free, or auto
+var subjid;     // subject's unique identification
+var table;      // name of MySQL table where data will be stored
+var sections;   // indicates which experiment sections are to be included
+
+function setGlobalVars() {
+    override    = true;
+    if ( override ) {
+        offline = true;
+        testing = true;
+        mode    = "free";
+        sections = [ "Intro", "Pretest", "Training", "Posttest", "Background" ];
+        sections = [ "Training" ];
+    } else {
+        offline = false;
+        testing = false;
+        mode    = "forced";
+        sections = [ "Intro", "Pretest", "Pretrain", "Training", "Posttest", "Background" ];
+    }
+    subjid      = "NONTURK" + Math.floor( Math.random()*1000000000 ) ;
+    table       = testing ? "scmvar_08_test" : "scmvar_08";
+    console.log( "experiment.html > setGlobalVars > override: " + override + "; offline: " + offline + "; testing: " + testing + "; mode: " + mode + "; subjid: " + subjid + "; table: " + table );
+}
+
+function showEntrancePage() {
+    setGlobalVars();
+    $('#target').html( entrance_nonturk );
+    $("#nextPageButton").click( assignCondition );
+    $("#nextPageButton").val( "Click Here to Start" );
+}
+
+function assignCondition() {
+    var numcond = 16;
+    var condition;
+    var proceed = function() {
+        console.log( "experiment.html > assignCondition > condition assigned: " + condition );
+        condition = Number(condition);
+        runExperiment( condition );
+    }
+    if ( offline ) {
+        condition = Math.floor( Math.random() * numcond );
+        proceed();
+    } else {
+        $.ajax({ type: 'post', cache: false, url: 'assign_condition.php',
+            data: { 'table': table, 'numcond': numcond, 'subjid': subjid },
+            success: function(data) {
+                console.log( "experiment.html > assignCondition succeeded: " + data );
+                condition = data;
+                proceed();
+            },
+            error: function(data) {
+                console.log( "experiment.html > assignCondition failed: " + data );
+                condition = Math.floor( Math.random() * numcond );
+                proceed();
+            }});
+    }
+}
+
+function conditionToFactors( condition ) {
+    switch( condition ) {
+        case 0:
+            return( { "condVariation": "Nonvaried",             "condVersion": 0,   "condTestSeq": 0 } ); break;
+        case 1:
+            return( { "condVariation": "Nonvaried",             "condVersion": 0,   "condTestSeq": 1 } ); break;
+        case 2:
+            return( { "condVariation": "Nonvaried",             "condVersion": 1,   "condTestSeq": 0 } ); break;
+        case 3:
+            return( { "condVariation": "Nonvaried",             "condVersion": 1,   "condTestSeq": 1 } ); break;
+        case 4:
+            return( { "condVariation": "Varied",                "condVersion": 0,   "condTestSeq": 0 } ); break;
+        case 5:
+            return( { "condVariation": "Varied",                "condVersion": 0,   "condTestSeq": 1 } ); break;
+        case 6:
+            return( { "condVariation": "Varied",                "condVersion": 1,   "condTestSeq": 0 } ); break;
+        case 7:
+            return( { "condVariation": "Varied",                "condVersion": 1,   "condTestSeq": 1 } ); break;
+        case 8:
+            return( { "condVariation": "Adaptive Variation",    "condVersion": 0,   "condTestSeq": 0 } ); break;
+        case 9:
+            return( { "condVariation": "Adaptive Variation",    "condVersion": 0,   "condTestSeq": 1 } ); break;
+        case 10:
+            return( { "condVariation": "Adaptive Variation",    "condVersion": 1,   "condTestSeq": 0 } ); break;
+        case 11:
+            return( { "condVariation": "Adaptive Variation",    "condVersion": 1,   "condTestSeq": 1 } ); break;
+        case 12:
+            return( { "condVariation": "Adaptive Retirement",   "condVersion": 0,   "condTestSeq": 0 } ); break;
+        case 13:
+            return( { "condVariation": "Adaptive Retirement",   "condVersion": 0,   "condTestSeq": 1 } ); break;
+        case 14:
+            return( { "condVariation": "Adaptive Retirement",   "condVersion": 1,   "condTestSeq": 0 } ); break;
+        case 15:
+            return( { "condVariation": "Adaptive Retirement",   "condVersion": 1,   "condTestSeq": 1 } ); break;
+    }
+}
+
+function runExperiment( condition ) {
+
+    // convert condition number into factor assignments
+    var factors         = conditionToFactors( condition );
+    var condVariation   = factors["condVariation"]; // whether the training examples are varied or nonvaried
+    condVariation = "Adaptive Retirement"; // testing only
+    var condVersion     = factors["condVersion"];   // whether the first training example is OAPlc or ROAPlc schema
+    var condTestSeq     = factors["condTestSeq"];   // which test problem set is used as pretest and which as posttest
+    console.log( "experiment.html > runExperiment > factors assigned. condVariation: " + condVariation + "; condVersion: " + condVersion + "; condTestSeq: " + condTestSeq );
+    
+    // generation of yoking target where needed is TBD
+    var yokingSeq       = null;
+    
+    // testing:
+    var condition = 1;
+    switch ( condition ) {
+        case 0 :
+            condVariation       = "Nonvaried";
+            condVersion         = 0;
+            condTestSeq         = 0;
+            yokingSeq           = null;
+            break;
+        case 1 :
+            condVariation       = "Adaptive Varied";
+            condVersion         = 0;
+            condTestSeq         = 0;
+            yokingSeq           = null;
+            break;
+    }
+    
+    // create experiment structure
+    var exp_struct  = makeExpStruct( condVariation, condVersion, condTestSeq, yokingSeq, sections, mode );
+    console.log( "experiment.html > runExperiment > exp_struct length " + exp_struct.length );
+    
+    // record start time
+    var start_time          = new Date();
+    var start_time_txt      = dateToString( start_time );
+    console.log( "experiment.html > runExperiment > starting experiment at " + start_time_txt );
+
+    // run the experiment
+    jsPsych.init($('#target'), {
+        "experiment_structure": exp_struct,
+		"plugins": [ // TBD
+			{"type": "survey", "src": "jspsych-survey.js"},
+            {"type": "scmvar_test", "src": "jspsych-scmvar.js"},
+            {"type": "scmvar_training", "src": "jspsych-scmvar.js"}
+		],
+        "finish": function( data ) {
+            // record end time
+            var end_time        = new Date();
+            var end_time_txt    = dateToString( end_time );
+            var total_time_min  = (( end_time.getTime() - start_time.getTime() ) / ( 60 * 1000 )).toFixed(2);
+            var subj_data       = { "subjid": subjid, "testing": testing.toString(), "mode": mode,
+                                    "condition": condition, "condVariation": condVariation, "condVersion": condVersion, "condTestSeq": condTestSeq,
+                                    "start": start_time_txt, "end": end_time_txt, "time": Number(total_time_min) };
+            var final_data      = prependData( subj_data, data );
+            console.log( "experiment.html > runExperiment jsPsych run complete. final data follows." );
+            console.log( JSON.stringify(final_data) );
+            if ( offline ) {
+                console.log( "experiment.html > runExperiment in offline mode, skipping data submission." );
+                showExitPage( JSON.stringify(final_data) );
+            } else {
+                $.ajax( { type: 'post',
+                          cache: false,
+                          url: 'submit_data.php',
+                          data: { 
+                            'table': table,
+                            'json': JSON.stringify(final_data) },
+                          success: function(data) {
+                            console.log( "experiment.html > runExperiment: submit_data succeeded." );
+                            showExitPage( final_data );
+                          },
+                          error: function(data) {
+                            console.log( "experiment.html > runExperiment: submit_data failed with error " + data.statusText );
+                            showExitPage( final_data );
+                          }
+                        } );
+            }
+        } } ) ;
+
+}
+
+function prependData( subjdata, expdata ) {
+    var block;
+    var trial;
+    var result = new Array( expdata.length );
+    for ( var i=0; i<expdata.length; i++ ) {
+        block = expdata[i];
+        result[i] = new Array( block.length );
+        for ( var j=0; j<block.length; j++ ) {
+            trial = block[j];
+            result[i][j] = $.extend( {},subjdata,trial );
+        }
+    }
+    return result;
+}
+
+function showExitPage( data ) {
+    if ( true ) {
+        $('#target').html( data );
+    } else {
+        $('#target').html( exit_nonturk );
+    }
+}
+
+showEntrancePage();
+
+</script>
+</html>

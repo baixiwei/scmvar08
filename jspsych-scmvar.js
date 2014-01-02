@@ -41,7 +41,7 @@ function createProgressBar( complete, total ) {
     content     += "</div></div></td></tr></table><br>";
     return content;
 }
-            
+
 // alertBox
 //  displays a jQuery UI dialog box using the text provided,
 //  running an optional callback function when the box is closed
@@ -59,7 +59,7 @@ function alertBox( target, content, callback ) {
         } );
     $('.ui-dialog-titlebar').css( { "visibility": "hidden" } );
 }
-            
+
 //////////////////////////////////////
 // scmvar_test plugin for jspsych
 //////////////////////////////////////
@@ -209,15 +209,22 @@ function alertBox( target, content, callback ) {
             // variables used to record user data
             var start_time, responses, accuracies, valid, falsetries=0;
             
-            // in the training plugin, the question is instantiated at run time
-            trial.question.instantiate( "Training", block.trial_idx );
-            text_list   = trial.question.text_list;
-            ans_list    = trial.question.ans_list;
-            key_list    = trial.question.key_list;
-            trial_data  = trial.question.data;
-            num_ques    = text_list.length;
+            // // in the training plugin, the question is instantiated at run time
+            // trial.question.instantiate( "Training", block.trial_idx );
+            // text_list   = trial.question.text_list;
+            // ans_list    = trial.question.ans_list;
+            // key_list    = trial.question.key_list;
+            // trial_data  = trial.question.data;
+            // num_ques    = text_list.length;
             
             var writePage = function() {
+                // in the training plugin, the question is instantiated at run time
+                trial.question.instantiate( "Training", block.trial_idx );
+                text_list   = trial.question.text_list;
+                ans_list    = trial.question.ans_list;
+                key_list    = trial.question.key_list;
+                trial_data  = trial.question.data;
+                num_ques    = text_list.length;
                 // generate content and write to $this
                 var content = "";
                 if ( trial.progress ) {
@@ -280,7 +287,6 @@ function alertBox( target, content, callback ) {
                         advanceTrial();
                     } else {
                         alertBox( $this, "Please select an option for each question before proceeding." );
-                        // alert( "Please select an option for each question before proceeding." );
                     }
                 } else {
                     if ( trial_data.mult_responses==undefined ) {
@@ -297,18 +303,32 @@ function alertBox( target, content, callback ) {
                     // if trial specifications require feedback, then give it
                         var feedback = trial.question.feedback( accuracies, trial.mode );
                         if ( Math.min.apply( null, accuracies )==0 ) {
-                        // if any responses are incorrect, mark them and make user correct them
+                            // if any responses are incorrect, record the failed attempt
+                            falsetries += 1;
+                            // mark and add feedback to any incorrect responses, and deactivate radio buttons
                             for ( var i=0; i<num_ques; i++ ) {
                                 if ( accuracies[i]==0 ) {
                                     $('#radio_options_'+i+'_wrapper').addClass( "incorrect" );
                                     $('#radio_options_'+i+'_feedback').addClass( "incorrect_feedback" );
                                     $('#radio_options_'+i+'_feedback').html( feedback.by_question[i] );
                                 }
+                                $('input[name="radio_options_'+i+'"]').attr( 'disabled', 'disabled' );
                             }
-                            alertBox( $this, feedback.overall );
-                            falsetries += 1;
+                            // set submit button to regenerate trial and disable it
+                            var rewritePage = function() {
+                                setTimeout( writePage, 250 );
+                            }
+                            $('#submit_button').unbind( 'click', nextPage );
+                            $('#submit_button').click( rewritePage );
+                            $('#submit_button').html( 'Try again' );
+                            $('#submit_button').attr( 'disabled', 'disabled' );
+                            // deliver negative feedback and reactivate the submit button after a pause once it is dismissed
+                            var reactivateButton = function() {
+                                setTimeout( function() { $('#submit_button').attr( 'disabled', false ); }, 5000 );
+                            }
+                            alertBox( $this, feedback.overall, reactivateButton );
                         } else {
-                        // otherwise deliver positive feedback and advance trial when it is dismissed
+                            // otherwise deliver positive feedback and advance trial when it is dismissed
                             alertBox( $this, feedback.overall, advanceTrial );
                         }
                         trial_data["falsetries"] = falsetries;
