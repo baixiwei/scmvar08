@@ -297,7 +297,8 @@ function alertBox( target, content, callback ) {
                               "mult_accuracies": accuracies.toString(),
                               "mult_accuracy_total": sum( accuracies ),
                               "accuracy": ( sum( accuracies ) / accuracies.length ),
-                              "rt": (new Date()).getTime()-start_time } );
+                              "rt": (new Date()).getTime()-start_time,
+                              "falsetries": falsetries } );
                     }
                     if ( (mode!="auto") && trial.feedback ) {
                     // if trial specifications require feedback, then give it

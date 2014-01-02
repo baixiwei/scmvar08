@@ -3,6 +3,7 @@
 #################
 
 database_connect.php
+data/
 
 #################
 ## Eclipse

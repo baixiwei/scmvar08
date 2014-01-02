@@ -552,7 +552,8 @@ function addTest( exp_struct, mode, test_section, questions ) {
 function addTraining( exp_struct, mode, condVariation, condVersion, yokingSeq ) {
 
     // unselect subsections of training if desired (for testing only)
-    var subsections = { "exposition": false, "examples": true, "concept": false, "conclusion": false };
+    var subsections = { "exposition": true, "examples": true, "concept": true, "conclusion": true };
+//    subsections = { "exposition": false, "examples": true, "concept": false, "conclusion": false };
 
     if ( VERBOSE ) { console.log( "addTraining running ..." ); }
     

@@ -232,7 +232,7 @@ function addTextBlock( exp_struct, mode, section, text_list ) {
                         console.log( "jsPsych.survey radio-multiple responses: " + responses.toString() );
                         endTime     = (new Date()).getTime();
                         rt          = (endTime-startTime);
-                        trial_data  = { "text_response": responses.toString(), "rt": rt, "falsetries": falsetries }
+                        trial_data  = { "mult_responses": responses.toString(), "rt": rt, "falsetries": falsetries }
                         block.data[block.trial_idx] = $.extend({},trial.data,trial_data);
                         $('#plugin_form').unbind( 'submit', nextPage );
                         $this.html('');

@@ -40,16 +40,16 @@ var sections;   // indicates which experiment sections are to be included
 function setGlobalVars() {
     override    = true;
     if ( override ) {
-        offline = true;
+        offline = false;
         testing = true;
-        mode    = "free";
+        mode    = "auto";
         sections = [ "Intro", "Pretest", "Training", "Posttest", "Background" ];
-        sections = [ "Training" ];
+//        sections = [ "Training" ];
     } else {
         offline = false;
         testing = false;
         mode    = "forced";
-        sections = [ "Intro", "Pretest", "Pretrain", "Training", "Posttest", "Background" ];
+        sections = [ "Intro", "Pretest", "Training", "Posttest", "Background" ];
     }
     subjid      = "NONTURK" + Math.floor( Math.random()*1000000000 ) ;
     table       = testing ? "scmvar_08_test" : "scmvar_08";
@@ -163,7 +163,7 @@ function runExperiment( condition ) {
     
     // record start time
     var start_time          = new Date();
-    var start_time_txt      = dateToString( start_time );
+    var start_time_txt      = start_time.toString();
     console.log( "experiment.html > runExperiment > starting experiment at " + start_time_txt );
 
     // run the experiment
@@ -177,7 +177,7 @@ function runExperiment( condition ) {
         "finish": function( data ) {
             // record end time
             var end_time        = new Date();
-            var end_time_txt    = dateToString( end_time );
+            var end_time_txt    = end_time.toString();
             var total_time_min  = (( end_time.getTime() - start_time.getTime() ) / ( 60 * 1000 )).toFixed(2);
             var subj_data       = { "subjid": subjid, "testing": testing.toString(), "mode": mode,
                                     "condition": condition, "condVariation": condVariation, "condVersion": condVersion, "condTestSeq": condTestSeq,
@@ -197,11 +197,11 @@ function runExperiment( condition ) {
                             'json': JSON.stringify(final_data) },
                           success: function(data) {
                             console.log( "experiment.html > runExperiment: submit_data succeeded." );
-                            showExitPage( final_data );
+                            showExitPage( JSON.stringify(final_data) );
                           },
                           error: function(data) {
                             console.log( "experiment.html > runExperiment: submit_data failed with error " + data.statusText );
-                            showExitPage( final_data );
+                            showExitPage( JSON.stringify(final_data) );
                           }
                         } );
             }
