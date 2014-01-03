@@ -7,6 +7,9 @@
 // switch to determine whether lots of info should be sent to console
 var VERBOSE             = true;
 
+// list of schemas used for training - referenced in many places
+var TRAINING_SCHEMAS    = [ "PCO", "OSS", "TFR" ];
+
 
 //////////////////////////////////
 // makeExpStruct
@@ -341,74 +344,57 @@ function getTrainingQuestions() {
             "According to your answer, some of the days might not get \"used.\" But the problem says she chooses a dress <strong>\"each day.\"</strong> Also, in your answer, the same day could be matched to more than one dress. But the problem says that she chooses <strong>a</strong> dress, meaning <strong>one</strong> dress, each day."
             )
         ];
-    
-    questions_by_schema["OAPlc"] = [
-        // these questions were used in Exp 5, and were originally planned to be used in Exp 6 too,
-        // but I eventually decided to use only PCO and OSS questions instead.
-        // these questions are retained here for completeness & in case I ever switch back to them.
-        new Question( "OAPlc", 13, "public works", "city districts", "public work", "city district",
-            // long version
-            "<p>A city is planning to build new public works, such as libraries, parks, bridges, etc. <span id='contrast'>In each city district, the government must decide which public work to build. They could build the same public work in more than one district, but they will not build more than one public work in a given district.</span></p><p>In how many different ways can they make their decisions, if there are {0} {1} and {2} {3}?</p>", 
-            // short version
-            "<p>Now suppose there are {0} {1} and {2} {3}. In how many different ways can they make their decisions now?</p>", 
-            // explanation
-            "According to your answer, some of the city districts might not get \"used.\" However, the problem says the government must decide what to build \"<strong>in each city district</strong>.\" Also, in your answer, you could match the same city district to more than one public work. But the problem says they will \"<strong>not build more than one public work</strong> in a given district.\"" ),
-        new Question( "OAPlc", 14, "browsers", "computers", "browser", "computer",
-            // long version
-            "<p>An IT manager is installing internet browsers, like IE, Firefox, and Chrome, on some office computers. <span id='contrast'>One browser will be installed on each computer. The same browser could be installed on more than one computer, but a given computer will not have more than one browser installed.</span></p><p>In how many different ways can he choose which browsers are installed on which computers, if there are {0} {1} and {2} {3}?</p>", 
-            // short version
-            "", 
-            // explanation
-            "According to your answer, some of the computers might not get \"used.\" However, the problem says \"one browser will be installed <strong>on each computer</strong>.\" Also, in your answer, you could match the same computer to more than one browser. But the problem says \"a given computer <strong>will not have more than one browser</strong> installed.\"" ),
-        new Question( "OAPlc", 15, "countries", "exhibit halls", "country", "exhibit hall",
-            // long version
-            "<p>A museum is planning to use several of its exhibit halls to show modern art from various countries, such as France, Germany, and the USA. <span id='contrast'>Each exhibit hall will be used to display art from one of the countries. The same country's art might be displayed in more than one hall, but a single hall will not display art from more than one country.</span></p><p>In how many different ways can the museum choose which countries to display in which exhibit halls, if there are {0} {1} and {2} {3}?</p>", 
-            // short version
-            "", 
-            // explanation
-            "According to your answer, some of the exhibit halls might not get \"used.\" However, the problem says \"<strong>each exhibit hall</strong> will be used.\" Also, in your answer, you could match the same exhibit hall to more than one country. But the problem says \"a single hall <strong>will not display art from more than one country</strong>.\"" ),
-        new Question( "OAPlc", 16, "different nuts", "hiding places", "nut", "hiding place", 
-            // long version
-            "<p>A squirrel collects various different kinds of nuts, like walnuts, chestnuts, peanuts, etc. <span id='contrast'>The squirrel will use each of several hiding places to hide one kind of nut. It might hide the same kind of nut in more than one hiding place, but it will not hide more than one kind of nut in a given hiding place.</span></p><p>In how many different ways can the squirrel hide his nuts, if there are {0} {1} and {2} {3}?</p>", 
-            // short version
-            "", 
-            // explanation
-            "According to your answer, some of the hiding places might not get \"used.\" However, the problem says \"the squirrel <strong>will use each of</strong>\" the hiding places. Also, in your answer, you could match the same hiding place to more than one kind of nut. But the problem says the squirrel \"<strong>will not hide more than one kind of nut</strong> in a given hiding place.\"" )
-        ];
         
-    questions_by_schema["ROAPlc"] = [
-        // these questions were used in Exp 5, and were originally planned to be used in Exp 6 too,
-        // but I eventually decided to use only PCO and OSS questions instead.
-        // these questions are retained here for completeness & in case I ever switch back to them.
-        new Question( "ROAPlc", 17, "city districts", "public works", "district", "public work",
+    // placeholder pending addition of the real TFR questions
+    questions_by_schema["TFR"] = [
+        // The first four questions are the same as in Exp 3; the remaining two are new in Exp 6.
+        new Question( "TFR", 101, "meals", "friends", "meal", "friend",
             // long version
-            "<p>A city is planning to build new public works, such as libraries, parks, bridges, etc. <span id='contrast'>For each public work, the government must decide in which city district to build it. They could build more than one public work in a given district, but they will not build the same public work in more than one district.</span></p><p>In how many different ways can they make their decisions, if there are {0} {1} and {2} {3}?</p>", 
+            "<p>A group of friends is eating at a restaurant. Each person chooses a meal from the menu. (It is possible for multiple people to choose the same meal.)</p><p>In how many different ways can the friends choose their meals, if there are {0} {1} and {2} {3}?</p>", 
             // short version
-            "<p>Now suppose there are {0} {1} and {2} {3}. In how many different ways can they make their decisions now?</p>", 
+            "<p>Now suppose there are {0} {1} and {2} {3}. In how many different ways can the friends choose their meals now?</p>", 
             // explanation
-            "According to your answer, some of the public works might not get \"used.\" However, the problem says \"<strong>For each public work,</strong> the government must decide\" where to build it. Also, in your answer, you could match the same public work to more than one city district. But the problem says they will \"<strong>not build the same public work in more than one district</strong>.\"" ),
-        new Question( "ROAPlc", 18, "computers", "browsers", "computer", "browser", 
+            "According to your answer, some of the friends might not get \"used.\" However, the problem says \"<strong>each person</strong>\" chooses a meal. Also, in your answer, the same person might get matched to more than one meal. But the problem says that each person chooses only one meal." ),
+        new Question( "TFR", 102, "pizza brands", "consumers", "pizza brand", "consumer",
             // long version
-            "<p>An IT manager is installing internet browsers, like IE, Firefox, and Chrome, on some office computers. <span id='contrast'>Each browser will be installed on one of the computers.  A given computer could have more than one browser installed on it, but the same browser cannot be installed on more than one computer, because of licensing requirements.</span></p><p>In how many different ways can he choose which browsers are installed on which computers, if there are {0} {1} and {2} {3}?</p>", 
+            "<p>A marketing research company conducts a taste test survey. Several consumers are each asked to choose their favorite from among several pizza brands. (It is possible for multiple consumers to choose the same brand.)</p><p>How many different results of the survey are possible, if there are {0} {1} and {2} {3}?</p>", 
             // short version
-            "", 
+            "<p>Now suppose there are {0} {1} and {2} {3}. How many different results of the survey are possible now?</p>", 
             // explanation
-            "According to your answer, some of the browsers might not get \"used.\" However, the problem says \"<strong>Each browser</strong> will be installed.\" Also, in your answer, you could match the same browser to more than one computer. But the problem says  \"<strong>the same browser cannot be installed on more than one computer</strong>.\"" ),
-        new Question( "ROAPlc", 19, "exhibit halls", "countries", "exhibit hall", "country",
+            "According to your answer, some of the consumers might not get \"used.\" However, the problem says the consumers \"are <strong>each</strong> asked\" to choose their favorite. Also, in your answer, the same consumer might get matched to more than one pizza brand. But the problem says that each consumer will choose their favorite, meaning <strong>only one</strong>.\"" ),
+        new Question( "TFR", 103, "possible majors", "students", "major", "student", 
             // long version
-            "<p>A museum is planning to use some of its exhibit halls to show modern art from various countries, such as France, Germany, and the USA. <span id='contrast'>One of the exhibit halls will be used to display art from each country. A single hall might display art from more than one country, but the same country's art will not be displayed in more than one hall.</span></p><p>In how many different ways can the museum choose which countries to display in which exhibit halls, if there are {0} {1} and {2} {3}?</p>", 
+            "<p>Several college freshmen are discussing what they want to study in college. Each of them has to choose a major from a fixed list of options. (Of course, it is possible for more than one to choose the same major.)</p><p>In how many different ways can the students choose their majors, if there are {0} {1} and {2} {3}?</p>",
             // short version
-            "", 
+            "<p>Now suppose there are {0} {1} and {2} {3}. In how many different ways can the students choose their majors now?</p>", 
             // explanation
-            "According to your answer, some of the countries might not get \"used.\" However, the problem says \"art <strong>from each country</strong>\" will be displayed. Also, in your answer, you could match the same country to more than one exhibit hall. But the problem says \"<strong>the same country's art will not be display in more than one hall</strong>.\"" ),
-        new Question( "ROAPlc", 20, "hiding places", "different nuts", "hiding place", "nut",
+            "According to your answer, some of the students might not get \"used.\" However, the problem says \"<strong>Each of them</strong> has to choose a major.\" Also, in your answer, the same student might get matched to more than one possible major. But the problem says they each must choose <strong>a</strong> major, meaning <strong>only one</strong>.\"" ),
+        new Question( "TFR", 104, "types of toy", "children", "toy", "child",
             // long version
-            "<p>A squirrel has collected several different nuts, including a walnut, a chestnut, a peanut, etc. <span id='contrast'>The squirrel will use one of several hiding places for each nut. It might hide more than one nut in the same hiding place, but it only has one nut of each kind, so it cannot hide the same kind of nut in more than one hiding place.</span></p><p>In how many different ways can the squirrel hide his nuts, if there are {0} {1} and {2} {3}?</p>", 
+            "<p>During playtime at a kindergarten, the teacher offers the children a number of different types of toy. Each child has to choose one type of toy. (There are enough toys of each type that more than one child, or even all of them, can choose the same type.)</p><p>In how many different ways can the children choose their toys, if there are {0} {1} and {2} {3}?</p>",
             // short version
-            "", 
+            "<p>Now suppose there are {0} {1} and {2} {3}. In how many different ways can the children choose their toys now?</p>",
             // explanation
-            "According to your answer, some of the different nuts might not get \"used.\" However, the problem says the squirrel will use one hiding place \"<strong>for each nut</strong>.\" Also, in your answer, you could match the same nut to more than one hiding place. But the problem says  \"<strong>it cannot hide the same kind of nut in more than one hiding place</strong>.\"" )
-        ];
+            "According to your answer, some of the children might not get \"used.\" However, the problem says \"<strong>Each child</strong> has to choose one type of toy.\" Also, in your answer, the same child might get matched to more than one type of toy. But the problem says \"each child has to choose <strong>one type of toy</strong>.\"" ),
+        // new question (not included in exp 3), drawn from exp 4 materials but with revision
+        new Question( "TFR", 105, "stocks", "bankers", "stock", "banker",
+            // long version
+            "<p>Amy has decided to invest in one of several stocks. She asks several bankers for their advice, and each banker chooses one of the stocks to advise her to buy. (It is possible for more than one banker to choose the same stock.)</p><p>In how many different ways can the bankers choose stocks, if there are {0} {1} and {2} {3}?</p>",
+            // short version
+            "<p>Now suppose there are {0} {1} and {2} {3}. In how many different ways can the bankers choose stocks now?</p>",
+            // explanation
+            "According to your answer, some of the bankers might not get \"used.\" However, the problem says \"<strong>each banker</strong> chooses.\" Also, in your answer, the same banker might get matched to more than one stock. But the problem says each banker chooses \"<strong>one</strong> of the stocks.\""
+        ),
+        // new question (not included in exp 3), adapted from an example by Isabel Bay (research assistant)
+        new Question( "TFR", 106, "trails", "hikers", "trail", "hiker",
+            // long version
+            "<p>Several hikers go hiking at a national park that has numerous hiking trails. Each hiker chooses one of the trails to hike on. (It is possible for more than one hiker to choose the same trail.)</p><p>In how many different ways can the hikers choose trails, if there are {0} {1} and {2} {3}?</p>",
+            // short version
+            "<p>Now suppose there are {0} {1} and {2} {3}. In how many different ways can the hikers choose trails now?</p>",
+            // explanation
+            "According to your answer, some of the hikers might not get \"used.\" However, the problem says \"<strong>Each hiker</strong> chooses.\" Also, in your answer, the same hiker might get matched with more than one trail. But the problem says each hiker chooses \"<strong>one</strong> of the trails.\""
+        )
+        ];        
         
     return questions_by_schema;
 }
@@ -576,7 +562,7 @@ function addTrainingExposition( exp_struct, mode, condVariation, condVersion ) {
     // NOTE: currently requires first example to be either PCO or OSS!
 
     var text_list;
-    var firstExampleSchema = [ "PCO", "OSS" ][ condVersion ];
+    var firstExampleSchema = TRAINING_SCHEMAS[ condVersion ];
     if ( firstExampleSchema=="PCO" ) {
         text_list   = [
             "<p>All the problems you saw in the previous part are called 'Sampling with Replacement' problems. Consider the following example:</p><div class='question'><p>Suppose that 2 golfers each have to choose a golf club for their next strike, and there are 5 different golf clubs to choose from. Of course, they can both use the same club, since they don't have to go at the same time. In how many different ways can they make their choices?</p></div><p>Think about this problem and try to get the answer before proceeding.</p>",
@@ -591,6 +577,8 @@ function addTrainingExposition( exp_struct, mode, condVariation, condVersion ) {
             "<p>The correct answer is " + createAnswer( 8, 2 ) + ". There are 8 possible cards you could get on the first draw. For <strong>EACH</strong> of the outcomes for the first draw, there are 8 outcomes for the second draw. So, altogether, there are " + createAnswer( 8, 2 ) + " outcomes for the two draws together.</p><div class='question'><p>Now, suppose that there are 5 different cards as in the first problem, but instead of drawing 2 times, you draw 8 times. How many outcomes are possible now?</p></div><p>Think about how to calculate the answer before proceeding (you don't have to actually calculate it, it's a very large number, but just think about <strong>HOW</strong> to calculate it).</p>",
             "<p>The correct answer is " + createAnswer( 5, 8 ) + ". Just as in the first problem, there are 5 possible cards you could get on the first draw. For each of those, there are 5 cards you could get on the second draw, so we multiply 5\xD75 to get the number of outcomes for the first <strong>TWO</strong> draws. For each of <strong>THOSE</strong>, there are 5 cards you could get on the <strong>THIRD</strong> draw, so we multiply by 5 again, and so on.</p><p>In the end, we multiply 5 by itself as many times as there are draws, that is, 8 times. So the answer is " + createAnswer( 5, 8 ) + ".</p>",
             "<p>In general, Sampling with Replacement problems always involve selecting from a set of <strong>OPTIONS</strong> a certain number of <strong>TIMES</strong>. And the number of possible outcomes for this kind of problem is always <strong>(OPTIONS)<sup>(TIMES)</sup></strong>, i.e. the number of OPTIONS to the power of the number of TIMES.</p><p>In the previous example, the OPTIONS were the cards in the deck, and the TIMES were the draws, since one card was chosen on each draw. So the answer was (# of Cards)<sup>(# of Draws)</sup>.</p><p>All Sampling with Replacement problems can be solved with this formula: <strong>(OPTIONS)<sup>(TIMES)</sup></strong>. You just need to figure out what is the number of OPTIONS chosen from and what is the number of TIMES an option is chosen.</p>" ];
+    } else if ( firstExampleSchema=="TFR" ) {
+        text_list   = [];       // TBD
     }
     text_list.push( "<p>Now you will have a chance to practice what you just learned with a series of example problems. After each problem, you'll be told whether your answers were correct, and if not, why not.</p><p>A progress bar at the top will show you what proportion of the examples you have completed.</p><p>Let's get started!</p>" );
 
@@ -607,14 +595,13 @@ So really, only 2. requires real-time selection for each trial - the other 3 are
 */
 function addTrainingExamples( exp_struct, mode, condVariation, condVersion, yokingSeq ) {
     var num_questions       = 6;                        // testing only; eventually change to 18
-    var training_schemas    = [ "PCO", "OSS" ];         // testing only; eventually add "TFR"
     switch ( condVariation ) {
         case "Nonvaried" :
-            var schema      = training_schemas[ condVersion ];
+            var schema      = TRAINING_SCHEMAS[ condVersion ];
             var questions   = ( shuffle( getTrainingQuestions()[ schema ] ) ).slice( 0, num_questions );
             break;
         case "Adaptive Varied" :
-            var schemas = reorderFromIdx( training_schemas, condVersion );
+            var schemas = reorderFromIdx( TRAINING_SCHEMAS, condVersion );
             var questions   = [];
             for ( var i=0; i<schemas.length; i++ ) {
                 questions.push( shuffle( getTrainingQuestions()[ schemas[i] ] ).slice( 0, num_questions ) );

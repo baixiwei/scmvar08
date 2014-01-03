@@ -1,153 +1,264 @@
 <?php
 
-// Picks a condition at random from among those with the minimum number of Ss so far assigned
+// global variables
+$table              = $_POST['table'];  // name of mysql table where experiment data is stored
+$subjid             = $_POST['subjid']; // participant id
+// $table              = 'scmvar_08_test';
+// $subjid             = (string)(rand(0,10000000));
+$numcond            = 4;                // experimental conditions
+$NONVARIED          = 0;
+$ADAPTIVE_VARIED    = 1;
+$YOKED_VARIED       = 2;
+$YOKED_SHUFFLED     = 3;
+$numsubcond         = 6;                // combinations of version & sequence variables
 
-// Sample usage in javascript:
-//
-/* 
-
-// Use jQuery ajax call to invoke php script
-// Set path to this script in url argument
-// data argument needs following parameters:
-// 		"table": name of table in mysql database that has experiment data
-//          "table" must have columns "condition" and "subjid"
-// 		"numcond": number of conditions
-//      "subjid": id of current subject
-// When the ajax call is complete, data will be a string = to the randomly chosen condition number
-$.ajax({
-	type: 'post',
-	cache: false,
-	url: 'assign_condition.php',
-	data: {"table": table, "numcond": numcond, "subjid": subjid},
-	success: function(data) { console.log(data); }
-});
-
-*/
 
 // connect to the database and create table if it doesn't exist
 include('database_connect.php');
-$subjid = $_POST['subjid'];
-$table  = $_POST['table'];
-$subjid = (string)(rand(0,10000000));
-$table  = 'scmvar_08_testing';
 createTable( $table );
 
-// name the conditions
-$numcond        = 5;
-$NONVARIED      = 0;
-$ADAPTIVE       = 1;
-$YOKED_RANDOM   = 2;
-$YOKED_BLOCKED  = 3;
-$YOKED_CLONE    = 4;
-
-// given an array of numbers, creates an array of probabilities
-// assigning equal probabilities to all numbers equal to the min of the original array and zero probability to all other numbers
-function completes_to_probs( $arr ) {
-    $weights = array();
-    for ( $i=0; $i<count($arr); $i++ ) {
-        $weights[$i] = ($arr[$i]==min($arr)) ? 1.0 : 0.0;
-    }
-    $probs = array();
-    for ( $i=0; $i<count($arr); $i++ ) {
-        $probs[$i] = $weights[$i]/array_sum($weights);
-    }
-    return $probs;
+// assign an experimental condition
+function assignCondition() {
+    $condition_weights = getWeightsCond();
+    $condition = weightedSelect( $condition_weights );
+    return $condition;
 }
 
-// given an array of probabilities, choose an array index according to those probabilities
-function select_by_probs( $probs ) {
-    $rand_val = mt_rand() / mt_getrandmax();
-    $idx = 0;
-    for ( $i=0; $i<count($probs); $i++ ) {
-        if($rand_val <= $probs[$i]) {
-            $idx = $i;
-            break;
-        } else {
-            $rand_val = $rand_val - $probs[$i];
+// assign a subcondition within a given experimental condition
+function assignSubcondition( $condition ) {
+    $subcondition_weights = getWeightsSubcond( $condition );
+    $subcondition = weightedSelect( $subcondition_weights );
+    return $subcondition;
+}
+
+// assign yoked subjid to a subject (used only when a yoked condition was selected)
+function assignYokingSubjid( $condition ) {
+    $subjids_weights = getWeightsYoking( $condition );
+    $subjids = array_keys( $subjids_weights );
+    $weights = array_values( $subjids_weights );
+    $subjid_idx = weightedSelect( $weights );
+    $subjid = $subjids[ $subjid_idx ];
+    return $subjid;
+}
+
+// choose an index randomly according to a vector of weights, which need not sum to 1
+function weightedSelect( $weights ) {
+    $tot = array_sum( $weights );
+    $r = lcg_value() * $tot;
+    $n = count( $weights );
+    do {
+        for ( $i=0; $i<$n; $i++ ) {
+            if ( $r<=$weights[$i] ) {
+                $result = $i;
+                break;
+            } else {
+                $r = $r-$weights[$i];
+            }
+        }
+    } while( $weights[ $result ] == 0 );
+    return $result;
+}
+
+// assign selection weight to each condition
+function getWeightsCond() {
+
+    global $table, $numcond, $NONVARIED, $ADAPTIVE_VARIED, $YOKED_VARIED, $YOKED_SHUFFLED;
+
+    $assigned   = getAssignedCond( $table, $numcond );
+    $completed  = getCompletedCond( $table, $numcond );
+    
+    $weights    = array_fill( 0, $numcond, 0 );
+    // yoked conditions may only be selected if they have been assigned fewer times than the number of completions in the adaptive varied condition,
+    // and each may only be assigned if its current assignments are <= those of the other
+    if ( ( $assigned[ $YOKED_VARIED ] < $completed[ $ADAPTIVE_VARIED ] ) && ( $assigned[ $YOKED_VARIED ] <= $assigned[ $YOKED_SHUFFLED ] ) ) {
+        $weights[ $YOKED_VARIED ] = 1;
+    }
+    if ( ( $assigned[ $YOKED_SHUFFLED ] < $completed[ $ADAPTIVE_VARIED ] ) && ( $assigned[ $YOKED_SHUFFLED ] <= $assigned[ $YOKED_VARIED ] ) ) {
+        $weights[ $YOKED_SHUFFLED ] = 1;
+    }
+    // adaptive varied condition may only be selected if both yoked conditions are unassignable AND it has not been assigned more times than nonvaried
+    if ( ( $weights[ $YOKED_VARIED ]==0 ) && ( $weights[ $YOKED_SHUFFLED ]==0 ) && ( $assigned[ $ADAPTIVE_VARIED ]<=$assigned[ $NONVARIED ] ) ) {
+        $weights[ $ADAPTIVE_VARIED ] = 1;
+    }
+    // nonvaried condition may only be selected if (1) both yoked conditions are unassignable AND it has not been assigned more times than adaptive varied, or (2) a yoked condition is assignable and it has been assigned fewer times than adaptive varied
+    if ( ( $weights[ $YOKED_VARIED ]==0 ) && ( $weights[ $YOKED_SHUFFLED ]==0 ) ) {
+        if ( $assigned[ $NONVARIED ]<=$assigned[ $ADAPTIVE_VARIED ] ) {
+            $weights[ $NONVARIED ] = 1;
+        }
+    } else if ( ( $weights[ $YOKED_VARIED ]>0 ) || ( $weights[ $YOKED_SHUFFLED ]>0 ) ) {
+        if ( $assigned[ $NONVARIED ]<$assigned[ $ADAPTIVE_VARIED ] ) {
+            $weights[ $NONVARIED ] = 1;
         }
     }
-    return $idx;
+    
+    return $weights;
 }
 
-// given an array of completions by condition and a selected condition, check whether it meets our criteria
-// specifically, we require that yoked conditions are only chosen if they have fewer completes than the adaptive condition
-// this requirement helps ensure that, in the yoked condition, yoking targets can be balanced among everyone in the adaptive condition
-function validate_condition( $cond, $completes ) {
-    global $NONVARIED, $ADAPTIVE, $YOKED_RANDOM, $YOKED_BLOCKED, $YOKED_CLONE;
-    if ( ( $cond==$NONVARIED ) or ( $cond==$ADAPTIVE ) ) {
-        return true;
-    } else if ( ( $cond==$YOKED_RANDOM ) or ( $cond==$YOKED_BLOCKED ) or ( $cond==$YOKED_CLONE ) ) {
-        return ( $completes[ $cond ] < $completes[ $ADAPTIVE ] );
+// assign selection weight to each subcondition, given a condition
+function getWeightsSubcond( $condition ) {
+
+    global $table, $numsubcond;
+
+    $assigned   = getAssignedSubcond( $table, $condition, $numsubcond );
+    $min_assn   = min( $assigned );
+    $weights    = array_fill( 0, $numsubcond, 0 );
+    for ( $i=0; $i<$numsubcond; $i++ ) {
+        if ( $assigned[$i]==$min_assn ) {
+            $weights[$i] = 1;
+        }
     }
+
+    return $weights;
+    
 }
 
-// record number of completes per condition
-// (MIGHT WISH TO CHANGE THIS NAME IF WE STICK WITH COUNTERBALANCING BY ASSIGNMENT INSTEAD OF COMPLETION)
-$completes  = array_fill( 0, $numcond, 0 );
-$query      = 'SELECT `condition`, COUNT(DISTINCT subjid) FROM '.mysql_real_escape_string($table).' GROUP BY `condition`';
-$result     = mysql_query($query);
-while ( $row = mysql_fetch_array($result) ) {
-	$completes[intval($row['condition'])] = intval($row['COUNT(DISTINCT subjid)']);
-}
+// assign selection weight to each potential yoking target, given a (yoked) condition
+function getWeightsYoking( $condition ) {
 
-echo json_encode( $completes ) . "<br>";
-
-// select a condition randomly from among those with min completes,
-// ensuring that the above validation condition(s) are met
-$probs = completes_to_probs( $completes );
-do {
-    $cond = select_by_probs( $probs );
-} while ( ! validate_condition( $cond, $completes ) );
-
-echo json_encode( $probs ) . "<br>";
-
-if ( ( $cond==$NONVARIED ) or ( $cond==$ADAPTIVE ) ) {
-    // if condition is nonvaried or adaptive, we need to select a version
-    // version determines which schema is used (nonvaried) or the order in which schemas are used (adaptive)
-    // first determine number of different versions among which we need to select
-    if ( $cond==$NONVARIED ) {
-        $num_versions = 3;  // one version for each of 3 training schemas
-    } else if ( $cond==$ADAPTIVE ) {
-        $num_versions = 6;  // one version for each *order* of the 3 training schemas
+    global $table;
+    
+    $assigned   = getAssignedYoking( $table, $condition );
+    $min_assn   = min( $assigned );
+    $weights    = array();
+    foreach( $assigned as $subjid => $num ) {
+        if ( $num==$min_assn ) {
+            $weights[$subjid] = 1;
+        } else {
+            $weights[$subjid] = 0;
+        }
     }
-    // record number of completes by version within given condition
-    $completes_by_version = array_fill( 0, $num_versions, 0 );
-    $query      = 'SELECT `version`, COUNT(DISTINCT subjid) FROM '.mysql_real_escape_string($table).' WHERE `condition`='.$cond.' GROUP BY `version`';
+    
+    return $weights;
+        
+}
+
+// find out how many times each condition has been assigned
+function getAssignedCond( $table, $numcond ) {
+    
+    // create array to hold # assigned per condition
+    $assigned = array_fill( 0, $numcond, 0 );
+    
+    // query database to get actual number assigned per condition
+    $query      = 'SELECT `condition`, COUNT(DISTINCT `subjid`) FROM '.mysql_real_escape_string($table).' GROUP BY `condition`';
     $result     = mysql_query($query);
     while ( $row = mysql_fetch_array($result) ) {
-        $completes_by_version[intval($row['version'])] = intval($row['COUNT(DISTINCT subjid)']);
+        $assigned[intval($row['condition'])] = intval($row['COUNT(DISTINCT `subjid`)']);
     }
-    // select a version randomly from among those with min completes
-    $version    = select_by_probs( completes_to_probs( $completes_by_version ) );
-    // record condition and version to params
-    $params     = array(
-        'condition' => (string)$cond,
-        'version'   => (string)$version
-        );
-    // record condition assignment to database
-    $query  = 'INSERT INTO '.mysql_real_escape_string($table).' (subjid,`condition`,`version`) VALUES ("'.mysql_real_escape_string($subjid).'", '.mysql_real_escape_string($cond).', '.mysql_real_escape_string($version).')';
-    $result = mysql_query($query);
-} else if ( ( $cond==$YOKED_RANDOM ) or ( $cond==$YOKED_BLOCKED ) or ( $cond==$YOKED_CLONE ) ) {
-    // if condition is any of the yoked conditions, we need to select which subject we're yoking to
     
-/* This turns out to be tricky. Here's how I think it can work:
-Maintain a list of candidate yoked subjids by condition.
-Whenever someone completes the exp in the adaptive condition, add their subjid to that list once for each yoked condition.
-Whenever someone starts the exp in any yoked condition, remove the yoked subjid from the list for that yoked condition.
-When it's time to assign a new condition, exclude yoked conditions for which no yoked subjids are available.
-...?
-*/
-    // record condition to params
-    $params     = array( 
-        'condition' => (string)$cond
-        );
-    // record condition assignment to database
-    $query  = 'INSERT INTO '.mysql_real_escape_string($table).' (subjid,`condition`) VALUES ("'.mysql_real_escape_string($subjid).'", '.mysql_real_escape_string($cond).')';
+    // return the result
+    return $assigned;
+
+}
+
+// find out how many times each condition has been completed
+function getCompletedCond( $table, $numcond ) {
+    
+    // create array to hold # complete per condition
+    $completed = array_fill( 0, $numcond, 0 );
+    
+    // query database to get actual number completed per condition
+    $query      = 'SELECT `condition`, COUNT(DISTINCT `subjid`) FROM '.mysql_real_escape_string($table).' WHERE `section`="Background" GROUP BY `condition`';
+    $result     = mysql_query($query);
+    while ( $row = mysql_fetch_array($result) ) {
+        $completed[intval($row['condition'])] = intval($row['COUNT(DISTINCT `subjid`)']);
+    }
+    
+    // return the result
+    return $completed;
+
+}
+
+// find out how many times each subcondition has been assigned within a given condition
+function getAssignedSubcond( $table, $condition, $numsubcond ) {
+
+    // create array to hold # complete per subcondition within given condition
+    $assigned = array_fill( 0, $numsubcond, 0 );
+
+    // query database to get actual number complete per subcondition within given condition
+    $query      = 'SELECT `subcondition`, COUNT(DISTINCT `subjid`) FROM '.mysql_real_escape_string($table).' WHERE `condition`='.$condition.' GROUP BY `subcondition`';
+    $result     = mysql_query($query);
+    while ( $row = mysql_fetch_array($result) ) {
+        $assigned[intval($row['subcondition'])] = intval($row['COUNT(DISTINCT `subjid`)']);
+    }
+
+    // return the result
+    return $assigned;
+    
+}
+
+// find out how many times each subjid in the adaptive varied condition has been assigned as a yoked subjid in a given (yoked) condition
+function getAssignedYoking( $table, $condition ) {
+
+    global $ADAPTIVE_VARIED;
+
+    // create list of subjids already completed in adaptive varied condition
+    $assigned   = array();
+    $query      = 'SELECT DISTINCT `subjid` FROM '.mysql_real_escape_string($table).' WHERE (`condition`='.$ADAPTIVE_VARIED.')&&(`section`="Background")';
+    $result     = mysql_query($query);
+    while( $row = mysql_fetch_array($result) ) {
+        $assigned[ $row['subjid'] ] = 0;
+    }
+    
+    // find out how many times each subjid has already been used in the present (yoked) condition
+    $query      = 'SELECT `yokingSubjid`, COUNT(DISTINCT `subjid`) FROM '.mysql_real_escape_string($table).' WHERE `condition`='.$condition.' GROUP BY `yokingSubjid`';
+    $result     = mysql_query($query);
+    while ( $row = mysql_fetch_array($result) ) {
+        if ( !empty( $row['yokingSubjid'] ) ) {
+            $assigned[$row['yokingSubjid']] = intval($row['COUNT(DISTINCT `subjid`)']);
+        }
+    }
+    
+    // return the result
+    return $assigned;
+
+}
+
+// get the sequence of question IDs used during training for a given yoked subjid
+function getYokingSequence( $table, $yoking_subjid ) {
+    $sequence   = array();
+    $query      = 'SELECT `number`, `quesID` FROM '.mysql_real_escape_string($table).' WHERE (`subjid`="'.$yoking_subjid.'")&&(`section`="Training")';
+    $result     = mysql_query($query);
+    while( $row = mysql_fetch_array($result) ) {
+        $sequence[ intval($row['number']) ] = intval($row['quesID']);
+    }
+    ksort( $sequence );
+    return $sequence;
+}
+
+// record assignments to database
+function recordAssignments( $table, $subjid, $condition, $subcondition, $yoking_subjid ) {
+    $query  = 'INSERT INTO '.mysql_real_escape_string($table).' (subjid,`condition`,`subcondition`,`yokingSubjid`) VALUES ("'.mysql_real_escape_string($subjid).'", '.mysql_real_escape_string($condition).', ' . mysql_real_escape_string($subcondition) . ', "' . mysql_real_escape_string($yoking_subjid) . '")';
     $result = mysql_query($query);
 }
 
+/*
+// testing
+$condition = 3;
+print "<pre>";
+print_r( getYokingSequence( $table, 'NONTURK86044643' ) );
+print "</pre>";
+//echo $yoking_subjid;
+*/
 
-// return condition assignment
-echo json_encode( $params );
+$condition      = assignCondition();
+$subcondition   = assignSubcondition( $condition );
+if ( ( $condition==$YOKED_VARIED ) || ( $condition==$YOKED_SHUFFLED ) ) {
+    $yokingSubjid   = assignYokingSubjid( $condition );
+    $yokingSeq      = getYokingSequence( $table, $yokingSubjid );
+} else {
+    $yokingSubjid   = "";
+    $yokingSeq      = array();
+}
+
+$result = array(
+    'condition'     => $condition,
+    'subcondition'  => $subcondition,
+    'yokingSubjid'  => $yokingSubjid,
+    'yokingSeq'     => $yokingSeq
+    );
+    
+echo json_encode( $result );
+
+recordAssignments( $table, $subjid, $condition, $subcondition, $yoking_subjid );
 
 ?>

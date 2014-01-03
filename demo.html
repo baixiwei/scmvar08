@@ -36,6 +36,8 @@ var mode;       // forced, free, or auto
 var subjid;     // subject's unique identification
 var table;      // name of MySQL table where data will be stored
 var sections;   // indicates which experiment sections are to be included
+var simulation; // whether or not we are simulating multiple subjects
+var idx = 0;    // index of current iteration (used only for simulation of multiple subjects)
 
 function setGlobalVars() {
     override    = true;
@@ -45,126 +47,84 @@ function setGlobalVars() {
         mode    = "auto";
         sections = [ "Intro", "Pretest", "Training", "Posttest", "Background" ];
 //        sections = [ "Training" ];
+        simulation = true;
     } else {
         offline = false;
         testing = false;
         mode    = "forced";
         sections = [ "Intro", "Pretest", "Training", "Posttest", "Background" ];
+        simulation = false;
     }
     subjid      = "NONTURK" + Math.floor( Math.random()*1000000000 ) ;
     table       = testing ? "scmvar_08_test" : "scmvar_08";
-    console.log( "experiment.html > setGlobalVars > override: " + override + "; offline: " + offline + "; testing: " + testing + "; mode: " + mode + "; subjid: " + subjid + "; table: " + table );
+    console.log( "index.html > setGlobalVars > override: " + override + "; offline: " + offline + "; testing: " + testing + "; mode: " + mode + "; subjid: " + subjid + "; table: " + table );
 }
 
 function showEntrancePage() {
     setGlobalVars();
-    $('#target').html( entrance_nonturk );
-    $("#nextPageButton").click( assignCondition );
-    $("#nextPageButton").val( "Click Here to Start" );
+    if ( simulation ) {
+        assignParameters();
+    } else { 
+        $('#target').html( entrance_nonturk );
+        $("#nextPageButton").click( assignParameters );
+        $("#nextPageButton").val( "Click Here to Start" );
+    }
 }
 
-function assignCondition() {
-    var numcond = 16;
-    var condition;
-    var proceed = function() {
-        console.log( "experiment.html > assignCondition > condition assigned: " + condition );
-        condition = Number(condition);
-        runExperiment( condition );
+function assignParameters() {
+    var numcond=4, numsubcond=6;
+    var condition, subcondition, yokingSubjid, yokingSeq;
+    var proceed = function( parameters ) {
+        console.log( "index.html > assignParameters assigned condition: " + parameters.condition + "; subcondition: " + parameters.subcondition + "; yokingSubjid: " + parameters.yokingSubjid + "; " + parameters.yokingSeq.toString() );
+        runExperiment( parameters );
     }
     if ( offline ) {
-        condition = Math.floor( Math.random() * numcond );
-        proceed();
+        console.log( "index.html > assignParameters running offline, using random assignment with restricted conditions." );
+        do { // yoking is not possible offline so must choose a non-yoked condition
+            condition       = Math.floor( Math.random() * numcond );
+        } while ( ( condition==2 ) || ( condition==3 ) );
+        subcondition    = Math.floor( Math.random() * numsubcond );
+        yokingSubjid    = null;
+        yokingSeq       = [];
+        proceed( { 'condition': condition, 'subcondition': subcondition, 'yokingSubjid': yokingSubjid, 'yokingSeq': yokingSeq } );
     } else {
-        $.ajax({ type: 'post', cache: false, url: 'assign_condition.php',
-            data: { 'table': table, 'numcond': numcond, 'subjid': subjid },
+        $.ajax({ type: 'post', cache: false, url: 'assign_parameters.php',
+            data: { 'table': table, 'subjid': subjid },
             success: function(data) {
-                console.log( "experiment.html > assignCondition succeeded: " + data );
-                condition = data;
-                proceed();
+                console.log( "index.html > assignParameters > php script succeeded. output follows: " + data );
+                proceed( $.parseJSON( data ) );
             },
             error: function(data) {
-                console.log( "experiment.html > assignCondition failed: " + data );
-                condition = Math.floor( Math.random() * numcond );
-                proceed();
+                console.log( "index.html > assignParameters > php script failed, using random assignment with restricted conditions." );
+                do { // yoking is not possible without database connection so must choose a non-yoked condition
+                    condition       = Math.floor( Math.random() * numcond );
+                } while ( ( condition==2 ) || ( condition==3 ) );
+                subcondition    = Math.floor( Math.random() * numsubcond );
+                yokingSubjid    = null;
+                yokingSeq       = [];
+                proceed( { 'condition': condition, 'subcondition': subcondition, 'yokingSubjid': yokingSubjid, 'yokingSeq': yokingSeq } );
             }});
     }
 }
 
-function conditionToFactors( condition ) {
-    switch( condition ) {
-        case 0:
-            return( { "condVariation": "Nonvaried",             "condVersion": 0,   "condTestSeq": 0 } ); break;
-        case 1:
-            return( { "condVariation": "Nonvaried",             "condVersion": 0,   "condTestSeq": 1 } ); break;
-        case 2:
-            return( { "condVariation": "Nonvaried",             "condVersion": 1,   "condTestSeq": 0 } ); break;
-        case 3:
-            return( { "condVariation": "Nonvaried",             "condVersion": 1,   "condTestSeq": 1 } ); break;
-        case 4:
-            return( { "condVariation": "Varied",                "condVersion": 0,   "condTestSeq": 0 } ); break;
-        case 5:
-            return( { "condVariation": "Varied",                "condVersion": 0,   "condTestSeq": 1 } ); break;
-        case 6:
-            return( { "condVariation": "Varied",                "condVersion": 1,   "condTestSeq": 0 } ); break;
-        case 7:
-            return( { "condVariation": "Varied",                "condVersion": 1,   "condTestSeq": 1 } ); break;
-        case 8:
-            return( { "condVariation": "Adaptive Variation",    "condVersion": 0,   "condTestSeq": 0 } ); break;
-        case 9:
-            return( { "condVariation": "Adaptive Variation",    "condVersion": 0,   "condTestSeq": 1 } ); break;
-        case 10:
-            return( { "condVariation": "Adaptive Variation",    "condVersion": 1,   "condTestSeq": 0 } ); break;
-        case 11:
-            return( { "condVariation": "Adaptive Variation",    "condVersion": 1,   "condTestSeq": 1 } ); break;
-        case 12:
-            return( { "condVariation": "Adaptive Retirement",   "condVersion": 0,   "condTestSeq": 0 } ); break;
-        case 13:
-            return( { "condVariation": "Adaptive Retirement",   "condVersion": 0,   "condTestSeq": 1 } ); break;
-        case 14:
-            return( { "condVariation": "Adaptive Retirement",   "condVersion": 1,   "condTestSeq": 0 } ); break;
-        case 15:
-            return( { "condVariation": "Adaptive Retirement",   "condVersion": 1,   "condTestSeq": 1 } ); break;
-    }
-}
-
-function runExperiment( condition ) {
+function runExperiment( parameters ) {
 
     // convert condition number into factor assignments
-    var factors         = conditionToFactors( condition );
-    var condVariation   = factors["condVariation"]; // whether the training examples are varied or nonvaried
-    condVariation = "Adaptive Retirement"; // testing only
-    var condVersion     = factors["condVersion"];   // whether the first training example is OAPlc or ROAPlc schema
-    var condTestSeq     = factors["condTestSeq"];   // which test problem set is used as pretest and which as posttest
-    console.log( "experiment.html > runExperiment > factors assigned. condVariation: " + condVariation + "; condVersion: " + condVersion + "; condTestSeq: " + condTestSeq );
-    
-    // generation of yoking target where needed is TBD
-    var yokingSeq       = null;
-    
-    // testing:
-    var condition = 1;
-    switch ( condition ) {
-        case 0 :
-            condVariation       = "Nonvaried";
-            condVersion         = 0;
-            condTestSeq         = 0;
-            yokingSeq           = null;
-            break;
-        case 1 :
-            condVariation       = "Adaptive Varied";
-            condVersion         = 0;
-            condTestSeq         = 0;
-            yokingSeq           = null;
-            break;
-    }
+    var condVariation   = [ 'Nonvaried', 'Adaptive Varied', 'Yoked Varied', 'Yoked Shuffled' ][ parameters.condition ];
+    var condVersion     = parameters.subcondition % 3;              // determines order in which schemas are used for training examples
+    var condTestSeq     = Math.floor(parameters.subcondition/3);    // which test problem set is used as pretest and which as posttest
+    var yokingSubjid    = parameters.yokingSubjid;                  // id of subject to whom this subject is yoked (yoked conditions only)
+    var yokingSeq       = parameters.yokingSeq;                     // sequence of question IDs for training (yoked conditions only)
+    console.log( "index.html > runExperiment > factors assigned. condVariation: " + condVariation + "; condVersion: " + condVersion + "; condTestSeq: " + condTestSeq + "; yokingSeq: " + yokingSeq );
     
     // create experiment structure
     var exp_struct  = makeExpStruct( condVariation, condVersion, condTestSeq, yokingSeq, sections, mode );
-    console.log( "experiment.html > runExperiment > exp_struct length " + exp_struct.length );
+    console.log( "index.html > runExperiment > exp_struct length " + exp_struct.length );
     
     // record start time
     var start_time          = new Date();
     var start_time_txt      = start_time.toString();
-    console.log( "experiment.html > runExperiment > starting experiment at " + start_time_txt );
+    console.log( "index.html > runExperiment > starting experiment at " + start_time_txt );
 
     // run the experiment
     jsPsych.init($('#target'), {
@@ -180,13 +140,15 @@ function runExperiment( condition ) {
             var end_time_txt    = end_time.toString();
             var total_time_min  = (( end_time.getTime() - start_time.getTime() ) / ( 60 * 1000 )).toFixed(2);
             var subj_data       = { "subjid": subjid, "testing": testing.toString(), "mode": mode,
-                                    "condition": condition, "condVariation": condVariation, "condVersion": condVersion, "condTestSeq": condTestSeq,
+                                    "condition": parameters.condition, "subcondition": parameters.subcondition,
+                                    "condVariation": condVariation, "condVersion": condVersion, "condTestSeq": condTestSeq,
+                                    "yokingSubjid": yokingSubjid, "yokingSeq": yokingSeq.toString(),
                                     "start": start_time_txt, "end": end_time_txt, "time": Number(total_time_min) };
             var final_data      = prependData( subj_data, data );
-            console.log( "experiment.html > runExperiment jsPsych run complete. final data follows." );
+            console.log( "index.html > runExperiment jsPsych run complete. final data follows." );
             console.log( JSON.stringify(final_data) );
             if ( offline ) {
-                console.log( "experiment.html > runExperiment in offline mode, skipping data submission." );
+                console.log( "index.html > runExperiment in offline mode, skipping data submission." );
                 showExitPage( JSON.stringify(final_data) );
             } else {
                 $.ajax( { type: 'post',
@@ -196,11 +158,11 @@ function runExperiment( condition ) {
                             'table': table,
                             'json': JSON.stringify(final_data) },
                           success: function(data) {
-                            console.log( "experiment.html > runExperiment: submit_data succeeded." );
+                            console.log( "index.html > runExperiment: submit_data succeeded." );
                             showExitPage( JSON.stringify(final_data) );
                           },
                           error: function(data) {
-                            console.log( "experiment.html > runExperiment: submit_data failed with error " + data.statusText );
+                            console.log( "index.html > runExperiment: submit_data failed with error " + data.statusText );
                             showExitPage( JSON.stringify(final_data) );
                           }
                         } );
@@ -225,10 +187,20 @@ function prependData( subjdata, expdata ) {
 }
 
 function showExitPage( data ) {
-    if ( true ) {
-        $('#target').html( data );
+    if ( simulation ) {
+        idx++;
+        if ( idx>=12 ) {
+            $('#target').append( '<br>Done.')
+        } else { 
+            $('#target').append( '<br>'+idx );
+            showEntrancePage();
+        }
     } else {
-        $('#target').html( exit_nonturk );
+        if ( true ) {
+            $('#target').html( data );
+        } else {
+            $('#target').html( exit_nonturk );
+        }
     }
 }
 

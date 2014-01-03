@@ -6,11 +6,14 @@ x   Disable radio buttons during this time, change submit to continue, reactivat
 x set up code for 4 conditions, with variation increasing from 1 schema (PCO) to 3 (PCO, OSS, TFR) after 3 in a row correct
     OR: counterbalance among schemas for nonvaried, and among schema orders for adaptively varied? Depends on outcome of validation.
 
-- data storage
+x data storage
 
 - set up PHP code for condition assignment & yoking
-    Conditions: adaptive variation, yoked random, yoked identical, nonvaried
-    If condition is any of yoked, make sure the existing completions for that condition are < those for adaptively varied, and if not, choose another condition
+x   Conditions: adaptive variation, yoked random, yoked identical, nonvaried
+x   If condition is any of yoked, make sure the existing completions for that condition are < those for adaptively varied, and if not, choose another condition
+x   Record condition & subcondition assignment
+    Randomly select yoked sid and extract trial sequence in yoked conditions
+    Record these at assignment as well
     (We want to ensure that each sid in the adaptively varied condition gets yoked equally often in each of the yoked conditions.)
 
 - choose randomly among conditions with other than the max number of assignments, with the constraint that 
@@ -24,8 +27,12 @@ find
 
 - 18 questions during training
 
+- training exposition for TFR
+
 - check whether the consistency of "options/selections" prompt with "for each/one of" prompt is <80% in previous studies, if so, include that prompt
 
 - consider changing terminology to "selection events"
 
 - add additional training questions, create explanations for them, revamp variation conditions to account for them
+
+- debriefing
