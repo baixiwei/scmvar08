@@ -8,31 +8,31 @@ x set up code for 4 conditions, with variation increasing from 1 schema (PCO) to
 
 x data storage
 
-- set up PHP code for condition assignment & yoking
+x set up PHP code for condition assignment & yoking
 x   Conditions: adaptive variation, yoked random, yoked identical, nonvaried
 x   If condition is any of yoked, make sure the existing completions for that condition are < those for adaptively varied, and if not, choose another condition
 x   Record condition & subcondition assignment
-    Randomly select yoked sid and extract trial sequence in yoked conditions
-    Record these at assignment as well
-    (We want to ensure that each sid in the adaptively varied condition gets yoked equally often in each of the yoked conditions.)
+x   Randomly select yoked sid and extract trial sequence in yoked conditions
+x   Record these at assignment as well
+x   (We want to ensure that each sid in the adaptively varied condition gets yoked equally often in each of the yoked conditions.)
 
-- choose randomly among conditions with other than the max number of assignments, with the constraint that 
+x other
+x   test interface
+x   allow continue after 3 errors?
+x   adjust area & text size
+x   debriefing    
+    
+x add additional training questions
+x   add new questions
+x   add feedback
+x   training exposition for TFR
+x   for...each page in exposition
 
-- weight conditions as follows:
-    Calculate total ASSIGNED in each condition and COMPLETE in adaptive variation condition
-    Both yoked conditions: if ASSIGNED is < COMPLETE in adaptive variation, weight=1, otherwise 0
-    Adaptive variation: 
-make list of possible yoking ids - already completed in adaptive variation condition
-find
+x run tests
 
-- 18 questions during training
-
-- training exposition for TFR
-
-- check whether the consistency of "options/selections" prompt with "for each/one of" prompt is <80% in previous studies, if so, include that prompt
-
-- consider changing terminology to "selection events"
-
-- add additional training questions, create explanations for them, revamp variation conditions to account for them
-
-- debriefing
+- discuss with Rob:
+    current format of training
+    whether to add roles prompt
+    whether to change terminology, e.g. 'options' vs 'alternatives', 'selections' vs 'selection events' vs 'times'
+    18 training questions?
+    use all schemas or only PCO/TFR? always use PCO first?

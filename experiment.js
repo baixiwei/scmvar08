@@ -42,7 +42,7 @@ function makeExpStruct( condVariation, condVersion, condTestSeq, yokingSeq, sect
 // Question
 //  a Question object contains information about one stimulus for test or training
 //  once the instantiate method has been called, the object can serve as a parameter array for jspsych_test or jspsych_training
-Question = function( schema, quesID, base_noun, exp_noun, base_label, exp_label, text_long, text_short, explanation ) {
+Question = function( quesID, schema, base_noun, exp_noun, base_label, exp_label, text_long, text_short, explanation ) {
     this.schema         = schema;
     this.quesID         = quesID;
     this.text_long      = text_long;
@@ -179,249 +179,6 @@ var instantiateQuestion = function( section, number ) {
     return this;
 }
 
-// generateTrainingFeedback: method of Question class
-//      provides feedback for responses to training version of question
-//      should only be called if instantiate has already been called
-var generateTrainingFeedback = function( accuracies, mode ) {
-    var feedback = { "overall": "", "by_question": new Array( accuracies.length ), "delay": 0 };
-    if ( Math.min.apply( null, accuracies )==1 ) {
-        feedback.overall    = "<p><img src='images/small-green-check-mark-th.png' class='icon'>  Great job! All of your answers are correct. Click 'OK' to continue.</p>";
-        feedback.delay      = { "auto": 0, "free": 500, "forced": 7500 }[ mode ];
-    } else {
-        if ( 3-sum(accuracies) == 1 ) {
-            feedback.overall    = "<p><img src='images/small-red-x-mark-th.png' class='icon'>  Sorry, one of your answers is incorrect.</p><p>The incorrect answer has been highlighted, and an explanation of why it is incorrect is displayed to the right. After reading the explanation, click 'Try again,' and the page will be reloaded with different numbers and the order of answers randomized.</p><p>The 'Try again' button will activate after a delay so that you have time to read the explanation.</p>";
-        } else {
-            feedback.overall    = "<p><img src='images/small-red-x-mark-th.png' class='icon'>  Sorry, some of your answers are incorrect.</p><p>The incorrect answers have been highlighted, and explanations of why they are incorrect are displayed to the right. Please read the explanations, click 'Try again,' and the page will be reloaded with different numbers and the order of answers randomized.</p><p>The 'Try again' button will activate after a delay so that you have time to read the explanations.</p>";
-        }
-        for ( var i=0; i<accuracies.length; i++ ) {
-            if ( accuracies[i]==0 ) {
-                if ( i==0 ) {   // relational prompt
-                    feedback.by_question[i] = this.explanation;
-                } else {        // final answers
-                    feedback.by_question[i] = "Because <strong>ONE</strong> of the " + this.base_noun + " is chosen for <strong>EACH</strong> of the " + this.exp_noun + ",<br>the answer should be <i><b>(number of " + this.base_noun + ") <sup>(number of " + this.exp_noun + ")</sup></b></i>.";
-                }
-            }
-        }
-        feedback.delay      = { "auto": 0, "free": 1000, "forced": 7500 }[ mode ];
-    }
-    return feedback;
-}
-
-// getTrainingQuestions
-//      provides the entire set of training examples used in all conditions, organized by schema
-function getTrainingQuestions() {
-
-    var questions_by_schema = {};
-    
-    questions_by_schema["PCO"] = [
-        // The first four questions are the same as in Exp 3; the remaining two are new in Exp 6.
-        new Question( "PCO", 1, "meals", "friends", "meal", "friend",
-            // long version
-            "<p>A group of friends is eating at a restaurant. Each person chooses a meal from the menu. (It is possible for multiple people to choose the same meal.)</p><p>In how many different ways can the friends choose their meals, if there are {0} {1} and {2} {3}?</p>", 
-            // short version
-            "<p>Now suppose there are {0} {1} and {2} {3}. In how many different ways can the friends choose their meals now?</p>", 
-            // explanation
-            "According to your answer, some of the friends might not get \"used.\" However, the problem says \"<strong>each person</strong>\" chooses a meal. Also, in your answer, the same person might get matched to more than one meal. But the problem says that each person chooses only one meal." ),
-        new Question( "PCO", 2, "pizza brands", "consumers", "pizza brand", "consumer",
-            // long version
-            "<p>A marketing research company conducts a taste test survey. Several consumers are each asked to choose their favorite from among several pizza brands. (It is possible for multiple consumers to choose the same brand.)</p><p>How many different results of the survey are possible, if there are {0} {1} and {2} {3}?</p>", 
-            // short version
-            "<p>Now suppose there are {0} {1} and {2} {3}. How many different results of the survey are possible now?</p>", 
-            // explanation
-            "According to your answer, some of the consumers might not get \"used.\" However, the problem says the consumers \"are <strong>each</strong> asked\" to choose their favorite. Also, in your answer, the same consumer might get matched to more than one pizza brand. But the problem says that each consumer will choose their favorite, meaning <strong>only one</strong>.\"" ),
-        new Question( "PCO", 3, "possible majors", "students", "major", "student", 
-            // long version
-            "<p>Several college freshmen are discussing what they want to study in college. Each of them has to choose a major from a fixed list of options. (Of course, it is possible for more than one to choose the same major.)</p><p>In how many different ways can the students choose their majors, if there are {0} {1} and {2} {3}?</p>",
-            // short version
-            "<p>Now suppose there are {0} {1} and {2} {3}. In how many different ways can the students choose their majors now?</p>", 
-            // explanation
-            "According to your answer, some of the students might not get \"used.\" However, the problem says \"<strong>Each of them</strong> has to choose a major.\" Also, in your answer, the same student might get matched to more than one possible major. But the problem says they each must choose <strong>a</strong> major, meaning <strong>only one</strong>.\"" ),
-        new Question( "PCO", 4, "types of toy", "children", "toy", "child",
-            // long version
-            "<p>During playtime at a kindergarten, the teacher offers the children a number of different types of toy. Each child has to choose one type of toy. (There are enough toys of each type that more than one child, or even all of them, can choose the same type.)</p><p>In how many different ways can the children choose their toys, if there are {0} {1} and {2} {3}?</p>",
-            // short version
-            "<p>Now suppose there are {0} {1} and {2} {3}. In how many different ways can the children choose their toys now?</p>",
-            // explanation
-            "According to your answer, some of the children might not get \"used.\" However, the problem says \"<strong>Each child</strong> has to choose one type of toy.\" Also, in your answer, the same child might get matched to more than one type of toy. But the problem says \"each child has to choose <strong>one type of toy</strong>.\"" ),
-        // new question (not included in exp 3), drawn from exp 4 materials but with revision
-        new Question( "PCO", 5, "stocks", "bankers", "stock", "banker",
-            // long version
-            "<p>Amy has decided to invest in one of several stocks. She asks several bankers for their advice, and each banker chooses one of the stocks to advise her to buy. (It is possible for more than one banker to choose the same stock.)</p><p>In how many different ways can the bankers choose stocks, if there are {0} {1} and {2} {3}?</p>",
-            // short version
-            "<p>Now suppose there are {0} {1} and {2} {3}. In how many different ways can the bankers choose stocks now?</p>",
-            // explanation
-            "According to your answer, some of the bankers might not get \"used.\" However, the problem says \"<strong>each banker</strong> chooses.\" Also, in your answer, the same banker might get matched to more than one stock. But the problem says each banker chooses \"<strong>one</strong> of the stocks.\""
-        ),
-        // new question (not included in exp 3), adapted from an example by Isabel Bay (research assistant)
-        new Question( "PCO", 6, "trails", "hikers", "trail", "hiker",
-            // long version
-            "<p>Several hikers go hiking at a national park that has numerous hiking trails. Each hiker chooses one of the trails to hike on. (It is possible for more than one hiker to choose the same trail.)</p><p>In how many different ways can the hikers choose trails, if there are {0} {1} and {2} {3}?</p>",
-            // short version
-            "<p>Now suppose there are {0} {1} and {2} {3}. In how many different ways can the hikers choose trails now?</p>",
-            // explanation
-            "According to your answer, some of the hikers might not get \"used.\" However, the problem says \"<strong>Each hiker</strong> chooses.\" Also, in your answer, the same hiker might get matched with more than one trail. But the problem says each hiker chooses \"<strong>one</strong> of the trails.\""
-        )
-        ];
-            
-    questions_by_schema["OSS"] = [
-        // The first four questions are the same as in Exp 3; the remaining two are new in Exp 6.
-        // new Question( "OSS", "possible notes", "notes in each sequence" , 
-            // // long version
-            // "<p>A piano student, when bored, plays random sequences of notes on the piano, using sequences of a fixed length, and choosing from a fixed set of notes. (It is possible to play the same note more than once in a sequence.)</p><p>How many different sequences are possible, if there are {0} {1} and {2} {3}?</p>",
-            // // short version
-            // "<p>Now suppose there are {0} {1} and {2} {3}. How many different sequences are possible now?</p>",
-            // // explanation
-            // ""
-            // ),
-        // Revised from original exp 3 version (above)
-        new Question( "OSS", 7, "keys in the set", "notes in each melody", "key", "note",
-            // long version
-            "<p>A piano student, when bored, plays random melodies on the piano. Each melody is the same number of notes long, and uses only keys from a fixed set of keys. (It is possible to play the same key more than once in a sequence.)</p><p>How many different melodies are possible, if there are {0} {1} and {2} {3}?</p>",
-            // short version
-            "<p>Now suppose there are {0} {1} and {2} {3}. How many different sequences are possible now?</p>",
-            // explanation
-            "According to your answer, some of the notes might not get \"used.\" That would mean those positions in the melody were \"blank,\" which makes no sense. Also, in your answer, the same note might get matched to more than one key. That would mean multiple keys are played at the same position in the melody, which the problem did not say is allowed."
-            ),
-        // new Question( "OSS", 8, "letters in the set", "letters in each password",
-            // // long version
-            // "<p>A website generates user passwords by selecting sequences of letters randomly from a fixed set of letters. (It is possible to use the same letter more than once in a sequence.)</p><p>How many different passwords are possible, if there are {0} {1} and {2} {3}?</p>", 
-            // // short version
-            // "<p>Now suppose there are {0} {1} and {2} {3}. How many different passwords are possible now?</p>",
-            // // explanation
-            // ""
-            // ),
-        // Revised from original exp 3 version (above)
-        new Question( "OSS", 8, "allowable letters", "letters in each password", "letter", "position",
-            // long version
-            "<p>A website generates user passwords by selecting a certain number of letters randomly from a set of allowable letters. (It is possible to use the same letter more than once in a password.)</p><p>How many different passwords are possible, if there are {0} {1} and {2} {3}?</p>", 
-            // short version
-            "<p>Now suppose there are {0} {1} and {2} {3}. How many different passwords are possible now?</p>",
-            // explanation
-            "According to your answer, some of the positions might not get \"used.\" That would mean those positions were \"blank,\" which makes no sense. Also, in your answer, the same position might get matched to more than one letter. That would mean multiple letters were generated for the same position in the password, which also makes no sense."
-            ),
-        new Question( "OSS", 9, "buttons", "flashes per sequence", "button", "flash", 
-            // long version
-            "<p>The game Simon uses a disk with several different-colored buttons. The buttons flash in sequence and then the player has to push the buttons in the same sequence - otherwise they get a shock. (It is possible for the same button to flash more than once in a sequence.)</p><p>How many different sequences are possible, if there are {0} {1} and {2} {3}?</p>", 
-            // short version
-            "<p>Now suppose there are {0} {1} and {2} {3}. How many different sequences are possible now?</p>",
-            // explanation
-            "According to your answer, some of the flashes in the sequence might not get \"used.\" That just means having fewer flashes total, which would contradict the assumption about how many flashes there are. Also, in your answer, the same flash might get matched to more than one button. That would mean multiple buttons flash at the same time, which the problem did not say is possible."
-            ),
-        // Revised from original exp 3 version (above)
-        // new Question( "OSS", "permissible numbers", "numbers on each ticket", 
-            // // long version
-            // "<p>In a certain city, municipal lottery tickets are printed using sequences of numbers chosen randomly from a fixed set. (It is possible for the same number to appear more than once in a sequence.)</p><p>How many different lottery tickets are possible, if there are {0} {1} and {2} {3}?</p>",
-            // // short version
-            // "<p>Now suppose there are {0} {1} and {2} {3}. How many different lottery tickets are possible now?</p>",
-            // // explanation
-            // ""
-            // )
-        // Revised from original exp 3 version (above)
-        new Question( "OSS", 10, "permissible numbers", "numbers on each ticket", "number", "position",
-            // long version
-            "<p>In a certain city, municipal lottery tickets are printed using series of numbers chosen randomly from a list of permissible numbers. (It is possible for the same number to appear at more than one position in a series.)</p><p>How many different lottery tickets are possible, if there are {0} {1} and {2} {3}?</p>",
-            // short version
-            "<p>Now suppose there are {0} {1} and {2} {3}. How many different lottery tickets are possible now?</p>",
-            // explanation
-            "According to your answer, some of the number positions might not get \"used.\" That would mean no number at all appears in those positions, which the problem did not say is possible. Also, in your answer, more than one number could be chosen for the same position. That would make no sense."
-            ),            
-        // new question (not included in exp 3), drawn from exp 4 materials
-        new Question( "OSS", 11, "answers for each question", "questions on the exam", "answer", "question",
-            // long version
-            "<p>A student is taking a multiple choice exam. Each question has the same number of answers and the student just chooses an answer randomly. (It is possible for him to choose the same answer for more than one question.)</p><p>In how many different ways can he fill out the exam, if there are {0} {1} and {2} {3}?</p>",
-            // short version
-            "<p>Now suppose there are {0} {1} and {2} {3}. In how many different ways can he fill out the exam now?</p>",
-            // explanation
-            "According to your answer, some of the questions might not get \"used.\" But the problem says he chooses an answer for each question. Also, in your answer, the same question could be matched to more than one answer. But the problem says that he chooses <strong>an</strong> answer, meaning <strong>one</strong> answer, for each question."
-            ),
-        // new question (not included in exp 3), drawn from exp 4 materials, but modified to emphasize "days" rather than "dances"
-        new Question( "OSS", 12, "dresses", "days with dances", "dress", "day",
-            // long version
-            "<p>Elizabeth is going to attend a dance every day for the next several days. Each day, she chooses a dress to wear to the dance. (It is possible for her to choose the same dress on more than one day.)</p><p>In how many different ways can she choose her dresses, if there are {0} {1} and {2} {3}?</p>",
-            // short version
-            "<p>Now suppose there are {0} {1} and {2} {3}. In how many different ways can she choose her dresses now?</p>",
-            // explanation
-            "According to your answer, some of the days might not get \"used.\" But the problem says she chooses a dress <strong>\"each day.\"</strong> Also, in your answer, the same day could be matched to more than one dress. But the problem says that she chooses <strong>a</strong> dress, meaning <strong>one</strong> dress, each day."
-            )
-        ];
-        
-    // placeholder pending addition of the real TFR questions
-    questions_by_schema["TFR"] = [
-        // The first four questions are the same as in Exp 3; the remaining two are new in Exp 6.
-        new Question( "TFR", 101, "meals", "friends", "meal", "friend",
-            // long version
-            "<p>A group of friends is eating at a restaurant. Each person chooses a meal from the menu. (It is possible for multiple people to choose the same meal.)</p><p>In how many different ways can the friends choose their meals, if there are {0} {1} and {2} {3}?</p>", 
-            // short version
-            "<p>Now suppose there are {0} {1} and {2} {3}. In how many different ways can the friends choose their meals now?</p>", 
-            // explanation
-            "According to your answer, some of the friends might not get \"used.\" However, the problem says \"<strong>each person</strong>\" chooses a meal. Also, in your answer, the same person might get matched to more than one meal. But the problem says that each person chooses only one meal." ),
-        new Question( "TFR", 102, "pizza brands", "consumers", "pizza brand", "consumer",
-            // long version
-            "<p>A marketing research company conducts a taste test survey. Several consumers are each asked to choose their favorite from among several pizza brands. (It is possible for multiple consumers to choose the same brand.)</p><p>How many different results of the survey are possible, if there are {0} {1} and {2} {3}?</p>", 
-            // short version
-            "<p>Now suppose there are {0} {1} and {2} {3}. How many different results of the survey are possible now?</p>", 
-            // explanation
-            "According to your answer, some of the consumers might not get \"used.\" However, the problem says the consumers \"are <strong>each</strong> asked\" to choose their favorite. Also, in your answer, the same consumer might get matched to more than one pizza brand. But the problem says that each consumer will choose their favorite, meaning <strong>only one</strong>.\"" ),
-        new Question( "TFR", 103, "possible majors", "students", "major", "student", 
-            // long version
-            "<p>Several college freshmen are discussing what they want to study in college. Each of them has to choose a major from a fixed list of options. (Of course, it is possible for more than one to choose the same major.)</p><p>In how many different ways can the students choose their majors, if there are {0} {1} and {2} {3}?</p>",
-            // short version
-            "<p>Now suppose there are {0} {1} and {2} {3}. In how many different ways can the students choose their majors now?</p>", 
-            // explanation
-            "According to your answer, some of the students might not get \"used.\" However, the problem says \"<strong>Each of them</strong> has to choose a major.\" Also, in your answer, the same student might get matched to more than one possible major. But the problem says they each must choose <strong>a</strong> major, meaning <strong>only one</strong>.\"" ),
-        new Question( "TFR", 104, "types of toy", "children", "toy", "child",
-            // long version
-            "<p>During playtime at a kindergarten, the teacher offers the children a number of different types of toy. Each child has to choose one type of toy. (There are enough toys of each type that more than one child, or even all of them, can choose the same type.)</p><p>In how many different ways can the children choose their toys, if there are {0} {1} and {2} {3}?</p>",
-            // short version
-            "<p>Now suppose there are {0} {1} and {2} {3}. In how many different ways can the children choose their toys now?</p>",
-            // explanation
-            "According to your answer, some of the children might not get \"used.\" However, the problem says \"<strong>Each child</strong> has to choose one type of toy.\" Also, in your answer, the same child might get matched to more than one type of toy. But the problem says \"each child has to choose <strong>one type of toy</strong>.\"" ),
-        // new question (not included in exp 3), drawn from exp 4 materials but with revision
-        new Question( "TFR", 105, "stocks", "bankers", "stock", "banker",
-            // long version
-            "<p>Amy has decided to invest in one of several stocks. She asks several bankers for their advice, and each banker chooses one of the stocks to advise her to buy. (It is possible for more than one banker to choose the same stock.)</p><p>In how many different ways can the bankers choose stocks, if there are {0} {1} and {2} {3}?</p>",
-            // short version
-            "<p>Now suppose there are {0} {1} and {2} {3}. In how many different ways can the bankers choose stocks now?</p>",
-            // explanation
-            "According to your answer, some of the bankers might not get \"used.\" However, the problem says \"<strong>each banker</strong> chooses.\" Also, in your answer, the same banker might get matched to more than one stock. But the problem says each banker chooses \"<strong>one</strong> of the stocks.\""
-        ),
-        // new question (not included in exp 3), adapted from an example by Isabel Bay (research assistant)
-        new Question( "TFR", 106, "trails", "hikers", "trail", "hiker",
-            // long version
-            "<p>Several hikers go hiking at a national park that has numerous hiking trails. Each hiker chooses one of the trails to hike on. (It is possible for more than one hiker to choose the same trail.)</p><p>In how many different ways can the hikers choose trails, if there are {0} {1} and {2} {3}?</p>",
-            // short version
-            "<p>Now suppose there are {0} {1} and {2} {3}. In how many different ways can the hikers choose trails now?</p>",
-            // explanation
-            "According to your answer, some of the hikers might not get \"used.\" However, the problem says \"<strong>Each hiker</strong> chooses.\" Also, in your answer, the same hiker might get matched with more than one trail. But the problem says each hiker chooses \"<strong>one</strong> of the trails.\""
-        )
-        ];        
-        
-    return questions_by_schema;
-}
-
-// getTrainingQuestionsBySchema
-//      returns a certain number of training questions all drawn from a given schema ordered randomly
-function getTrainingQuestionsBySchema( schema, num_questions ) {
-    return( shuffle( getTrainingQuestions()[schema] ).slice(0,num_questions) );
-}
-
-// getTrainingQuestionsByIds
-//      given an array of question ids, returns an array of the corresponding questions
-function getTrainingQuestionsByIds( quesIDs ) {
-    var questions_by_schema = getTrainingQuestions();
-    var original_questions = [];
-    for ( var schema in questions_by_schema ) {
-        original_questions = original_questions.concat( questions_by_schema[schema] );
-    }
-    var filtered_questions = new Array( quesIDs.length );
-    for ( var i=0; i<original_questions.length; i++ ) {
-        if ( quesIDs.indexOf( original_questions[i].quesID ) != -1 ) {
-            filtered_questions[ quesIDs.indexOf( original_questions[i].quesID ) ] = original_questions[i];
-        }
-    }
-    return filtered_questions;
-}
-
 // getTestQuestionsBySet
 //      provides all test questions, organized by question set
 function getTestQuestionsBySet() {
@@ -500,6 +257,322 @@ function getTestQuestionsBySet() {
     return test_question_sets;
 }
 
+// getTrainingQuestions
+//      provides the entire set of training examples used in all conditions, organized by schema
+function getTrainingQuestions() {
+
+    var questions_by_schema = {};
+    
+    questions_by_schema["PCO"] = [
+        // problems 101-106 correspond to problems 1-6 in experiment 6
+        // there are minor wording changes, same as in experiment 7
+        // short versions and feedback are added in experiment 8 (but are mostly same as in experiment 6)
+        new Question( 101, "PCO", "meals", "friends", "meal", "friend",
+            "<p>A group of friends is eating at a restaurant. Each friend chooses a meal from the menu. (It is possible for multiple friends to choose the same meal.)</p><p>In how many different ways can the friends choose their meals, if there are {0} {1} and {2} {3}?</p>",
+            "<p>Now suppose there are {0} {1} and {2} {3}. In how many different ways can the friends choose their meals now?</p>", 
+            "According to your answer, some of the friends might not get \"used.\" However, the problem says \"<strong>each friend</strong>\" chooses a meal. Also, in your answer, the same friend might get matched to more than one meal. But the problem says that each friend chooses only one meal." ),
+        new Question( 102, "PCO", "pizza brands", "consumers", "pizza brand", "consumer",
+            "<p>A marketing research company conducts a taste test survey. Several consumers are each asked to choose their favorite from among several pizza brands. (It is possible for multiple consumers to choose the same brand.)</p><p>How many different results of the survey are possible, if there are {0} {1} and {2} {3}?</p>",
+            "<p>Now suppose there are {0} {1} and {2} {3}. How many different results of the survey are possible now?</p>", 
+            "According to your answer, some of the consumers might not get \"used.\" However, the problem says the consumers \"are <strong>each</strong> asked\" to choose their favorite. Also, in your answer, the same consumer might get matched to more than one pizza brand. But the problem says that each consumer will choose their favorite, meaning <strong>only one</strong>.\"" ),
+        new Question( 103, "PCO", "majors", "students", "major", "student",
+            "<p>Several college freshmen are discussing what they want to study in college. Each of them has to choose a major from a list of available majors. (Of course, it is possible for more than one to choose the same major.)</p><p>In how many different ways can the students choose their majors, if there are {0} {1} and {2} {3}?</p>",
+            "<p>Now suppose there are {0} {1} and {2} {3}. In how many different ways can the students choose their majors now?</p>", 
+            "According to your answer, some of the students might not get \"used.\" However, the problem says \"<strong>Each of them</strong> has to choose a major.\" Also, in your answer, the same student might get matched to more than one possible major. But the problem says they each must choose <strong>a</strong> major, meaning <strong>only one</strong>.\"" ),
+        new Question( 104, "PCO", "types of toy", "children", "toy", "child",
+            "<p>During playtime at a kindergarten, the teacher offers the children a number of different types of toy. Each child has to choose one type of toy. (There are enough toys of each type that more than one child, or even all of them, can choose the same type.)</p><p>In how many different ways can the children choose their toys, if there are {0} {1} and {2} {3}?</p>",
+            "<p>Now suppose there are {0} {1} and {2} {3}. In how many different ways can the children choose their toys now?</p>",
+            "According to your answer, some of the children might not get \"used.\" However, the problem says \"<strong>Each child</strong> has to choose one type of toy.\" Also, in your answer, the same child might get matched to more than one type of toy. But the problem says \"each child has to choose <strong>one type of toy</strong>.\"" ),
+        new Question( 105, "PCO", "stocks", "bankers", "stock", "banker",
+            "<p>Amy has decided to invest in one of several stocks. She asks several bankers for their advice, and each banker chooses one of the stocks to advise her to buy. (It is possible for more than one banker to choose the same stock.)</p><p>In how many different ways can the bankers choose stocks, if there are {0} {1} and {2} {3}?</p>",
+            "<p>Now suppose there are {0} {1} and {2} {3}. In how many different ways can the bankers choose stocks now?</p>",
+            "According to your answer, some of the bankers might not get \"used.\" However, the problem says \"<strong>each banker</strong> chooses.\" Also, in your answer, the same banker might get matched to more than one stock. But the problem says each banker chooses \"<strong>one</strong> of the stocks.\"" ),
+        new Question( 106, "PCO", "trails", "hikers", "trail", "hiker",
+            "<p>Several hikers go hiking at a national park that has numerous hiking trails. Each hiker chooses one of the trails to hike on. (It is possible for more than one hiker to hike on the same trail.)</p><p>In how many different ways can the hikers choose trails, if there are {0} {1} and {2} {3}?</p>",
+            "<p>Now suppose there are {0} {1} and {2} {3}. In how many different ways can the hikers choose trails now?</p>",
+            "According to your answer, some of the hikers might not get \"used.\" However, the problem says \"<strong>each hiker</strong> chooses.\" Also, in your answer, the same hiker might get matched with more than one trail. But the problem says each hiker chooses \"<strong>one</strong> of the trails.\"" ),
+        new Question( 107, "PCO", "horses", "gamblers", "horse", "gambler",
+            "<p>Several gamblers are watching a horse race. Each of them bets on one of the horses to win. (More than one gambler can bet on the same horse.)</p><p>In how many different ways can the gamblers place their bets, if there are {0} {1} and {2} {3}?</p>",
+            "<p>Now suppose there are {0} {1} and {2} {3}. In how many different ways can the gamblers place their bets now?</p>",
+            "According to your answer, some of the gamblers might not get \"used.\" However, the problem says \"<strong>each</strong>\" gambler bets. Also, in your answer, the same gambler might get matched to more than one horse. But the problem says each of them bets on \"<strong>one</strong>\" of the horses." ),
+        new Question( 108, "PCO", "signs", "fans", "sign", "fan",
+            "<p>Fans attending the basketball game are given a sign with admission to the game. Each fan chooses from several different signs offered, such as \"D-fense,\" \"play hard,\" \"get loud,\" etc. (The same sign can be chosen by more than one fan.)</p><p>In how many different ways can the fans choose their signs, if there are {0} {1} and {2} {3}?</p>",
+            "<p>Now suppose there are {0} {1} and {2} {3}. In how many different ways can the fans choose their signs now?</p>",
+            "According to your answer, some of the fans might not get \"used.\" However, the problem says \"<strong>each fan</strong>\" chooses a sign. Also, in your answer, the same fan might get matched to more than one sign. But the problem says each fan is given \"<strong>a</strong> sign,\" meaning only one." ),
+        new Question( 109, "PCO", "songs", "singers", "song", "singer",
+            "<p>At an audition for singers, several singers receive a list of songs, and each one has to pick one of the songs to sing. (It is possible for more than one singer to choose the same song.)</p><p>In how many different ways can the singers pick their songs, if there are {0} {1} and {2} {3}?</p>",
+            "<p>Now suppose there are {0} {1} and {2} {3}. In how many different ways can the singers pick their songs now?</p>",
+            "According to your answer, some of the singers might not get \"used.\" However, the problem says \"<strong>each one</strong>\" picks a song. Also, in your answer, the same singer might get matched to more than one song. But the problem says each picks \"<strong>one</strong> of the songs.\"" ),
+        new Question( 110, "PCO", "spa packages", "vacationers", "package", "vacationer",
+            "<p>A group of vacationers go to their resort spa, where various spa packages are offered. Each person chooses a spa package. (It is possible for multiple people to choose the same spa package.)</p><p>In how many different ways can the vacationers pick their spa packages, if there are {0} {1} and {2} {3}?</p>",
+            "<p>Now suppose there are {0} {1} and {2} {3}. In how many different ways can the vacationers pick their spa packages now?</p>",
+            "According to your answer, some of the vacationers might not get \"used.\" However, the problem says \"<strong>each</strong> person chooses.\" Also, in your answer, the same vacationer might get matched to more than one package. But the problem says each person chooses \"<strong>a</strong> spa package,\" meaning only one." ),
+        new Question( 111, "PCO", "types of bat", "players", "bat", "player",
+            "<p>During batting practice for a baseball team, the coach offers the players a variety of different bats to use, e.g. wood, aluminum, hybrid, etc. Each player picks out one of these. (There are enough bats of each type that more than one player, or even all of them, can choose the same type.)</p><p>In how many different ways can the baseball team pick their bats, if there are {0} {1} and {2} {3}?</p>",
+            "<p>Now suppose there are {0} {1} and {2} {3}. In how many different ways can the baseball team pick their bats now?</p>",
+            "According to your answer, some of the players might not get \"used.\" However, the problem says \"<strong>each</strong> player picks.\" Also, in your answer, the same player might get matched to more than one bat. But the problem says each player picks out \"<strong>one</strong>\" bat." ),
+        new Question( 112, "PCO", "essays", "judges", "essay", "judge",
+            "<p>A local organization is holding an essay competition. To determine which essay will qualify for the next round, the judges of the competition must each vote for their favorite essay. (It is possible for a single essay to receive more than one vote, but each judge has only one vote.)</p><p>In how many ways can the judges cast their votes, if there are {0} {1} and {2} {3}?</p>",
+            "<p>Now suppose there are {0} {1} and {2} {3}. In how many ways can the judges cast their votes now?</p>",
+            "According to your answer, some of the judges might not get \"used.\" However, the problem says the judges \"must <strong>each</strong> vote.\" Also, in your answer, the same judge might get matched to more than one essay. But the problem says each judge votes for his/her \"<strong>favorite</strong>,\" meaning only one." ),
+        new Question( 113, "PCO", "parts available", "actors trying out", "part", "actor",
+            "<p>Several actors come to try out for a play, and there are several parts available. However, a given actor can only try out for one part. (It is possible for more than one actor to try out for the same part.)</p><p>In how many different ways can the actors try out for parts, if there are {0} {1} and {2} {3}?</p>",
+            "<p>Now suppose there are {0} {1} and {2} {3}. In how many different ways can the actors try out for parts now?</p>",
+            "According to your answer, some of the actors might not get \"used.\" However, the problem implies that every actor will try out. Also, in your answer, the same actor might get matched to more than one part. But the problem says a given actor \"can only try out for <strong>one</strong> part.\"" ),
+        new Question( 114, "PCO", "star ratings", "critics", "star", "critic",
+            "<p>Several restaurant critics all rate the same restaurant using a star rating system, i.e. from one star to the maximum number of stars. Each critic rates the restaurant separately (but it is possible that more than one critic might give the same rating).</p><p>In how many different ways can the critics rate the restaurant, if there are {0} {1} and {2} {3}?</p>",
+            "<p>Now suppose there are {0} {1} and {2} {3}. In how many different ways can the critics rate the restaurant now?</p>",
+            "According to your answer, some of the critics might not get \"used.\" However, the problem says \"<strong>each</strong> critic rates\" the restaurant. Also, in your answer, the same critic might get matched to more than one star rating. But the problem implies that each critic must choose give only one rating." ),
+        new Question( 115, "PCO", "issues", "candidates", "issue", "candidate",
+            "<p>In a primary election for a political party, there are several hot political issues, such as reducing crime, improving education, reining in the deficit, and so on.  Each candidate in the primary decides to focus on one of these issues as the center of their campaign.  (More than one candidate might focus on the same issue.)</p><p>In how many different ways can the issues be selected by the candidates, if there are {0} {1} and {2} {3}?</p>",
+            "<p>Now suppose there are {0} {1} and {2} {3}. In how many different ways can the issues be selected by the candidates now?</p>",
+            "According to your answer, some of the candidates might not get \"used.\" However, the problem says that \"<strong>each</strong> candidate\" selects an issue. Also, in your answer, the same candidate might get matched to more than one issue. But the problem says each candidate focuses on \"<strong>one</strong>\" of the issues." ),
+        new Question( 116, "PCO", "textbooks", "history teachers", "textbook", "teacher",
+            "<p>In a certain high school, there are several different textbooks used for a world history course.  Each history teacher can use whichever textbook he or she prefers.  (The same textbook can be used by more than one teacher.)</p><p>In how many different ways can textbooks be selected by the history teachers, if there are {0} {1} and {2} {3}?</p>",
+            "<p>Now suppose there are {0} {1} and {2} {3}. In how many different ways can textbooks be selected by the history teachers now?</p>",
+            "According to your answer, some of the teachers might not get \"used.\" However, the problem says \"<strong>each</strong> history teacher\" chooses a book. Also, in your answer, the same teacher might get matched to more than one textbook. But the problem implies that each teacher can use only one textbook." ),
+        new Question( 117, "PCO", "crimes", "journalists", "crime", "journalist",
+            "<p>In a certain city, several major crimes occurred in the past week.  The crime journalists working at the city's newspapers each must decide which of these crimes to report on.  (The journalists work at different newspapers, so more than one could report on the same crime.)</p><p>In how many different ways can the journalists report on the crimes, if there are {0} {1} and {2} {3}?</p>",
+            "<p>Now suppose there are {0} {1} and {2} {3}. In how many different ways can the journalists report on the crimes now?</p>",
+            "According to your answer, some of the journalists might not get \"used.\" However, the problem says that the journalists \"<strong>each</strong>\" must report on a crime. Also, in your answer, the same journalist might get matched to more than one crime. But the problem implies that each journalist may only report on one crime." ),
+        new Question( 118, "PCO", "presentations occurring at the same time", "professors", "presentation", "professor",
+            "<p>Several professors from the same university are attending a conference.  There are several presentations occurring at the same time, so each professor can only attend one of them.  (However, more than one professor can attend the same presentation.)</p><p>In how many different ways can the professors attend the presentations, if there are {0} {1} and {2} {3}?</p>",
+            "<p>Now suppose there are {0} {1} and {2} {3}. In how many different ways can the professors attend the presentations now?</p>",
+            "According to your answer, some of the professors might not get \"used.\" However, the problem implies that every professor will attend a presentation. Also, in your answer, the same professor might get matched to more than one presentation. But the problem says that each professor \"can only attend <strong>one</strong>.\"" ),
+        new Question( 119, "PCO", "topics", "contestants", "topic", "contestant",
+            "<p>On a TV game show, during each round, each contestant must answer a trivia question correctly in order to move on to the next round.  The contestants can pick the topic of the question they will answer from the topics available.  (The same topic can be chosen by more than one contestant.)</p><p>In a given round, in how many different ways can the contestants pick their topics, if there are {0} {1} and {2} {3}?</p>",
+            "<p>Now suppose there are {0} {1} and {2} {3}. In how many different ways can the contestants pick their topics now?</p>",
+            "According to your answer, some of the contestants might not get \"used.\" However, the problem says \"<strong>each</strong> contestant\" must choose a topic. Also, in your answer, the same contestant might get matched to more than one topic. But the problem says that the contestants pick \"<strong>the</strong> topic,\" meaning only one topic." ),
+        new Question( 120, "PCO", "famous buildings", "painters", "building", "painter",
+            "<p>Several painters visit a city famous for its beautiful architecture.  Each painter paints one of the famous buildings in the city.  (More than one of them might paint the same building.)</p><p>In how many different ways can the painters select which buildings to paint, if there are {0} {1} and {2} {3}?</p>",
+            "<p>Now suppose there are {0} {1} and {2} {3}. In how many different ways can the painters select which buildings to paint now?</p>",
+            "According to your answer, some of the painters might not get \"used.\" However, the problem says \"<strong>each</strong> painter\" paints a building. Also, in your answer, the same painter might get matched to more than one building. But the problem says each painter paints \"<strong>one</strong>\" of the buildings." )
+    ];
+            
+    questions_by_schema["OSS"] = [
+        new Question( 201, "OSS", "hotels that she likes", "trips to Berlin", "hotel", "trip",
+            "<p>Sheila goes to Berlin on business several times each year, and each time she goes, she stays at one of several hotels that she likes. (There might be more than one time when she stays at the same hotel.)</p><p>In how many different ways could she plan her hotel stays this year, if there are {0} {1} and {2} {3}?</p>",
+            "<p>Now suppose there are {0} {1} and {2} {3}. In how many different ways could she plan her hotel stays this year now?</p>",
+            "According to your answer, some of the trips might not get \"used.\" That would mean Sheila did not stay at any of the hotels on those trips, but the problem says she always stays at one of the hotels. Also, in your answer, one of the trips might get matched to more than one hotel, meaning Sheila would stay at multiple hotels on that trip, but the problem says she only stays at one hotel per trip." ),
+        new Question( 202, "OSS", "plot elements", "scenes in a script", "element", "scene",
+            "<p>ScriptWriter Pro is a software that helps script writers come up with movie scripts by randomly generating script outlines. A script outline contains a certain number of scenes, with each scene containing a single plot element, such as \"exposition,\" \"action,\" \"suspense,\" and so on. (The same plot element could be used more than once in a script outline.)</p><p>How many different script outlines are possible, if there are {0} {1} and {2} {3}?</p>",
+            "<p>Now suppose there are {0} {1} and {2} {3}. How many different script outlines are possible now?</p>",
+            "According to your answer, some of the scenes might not get \"used.\" However, the problem says \"<strong>each</strong> scene\" contains a plot element. Also, in your answer, the same scene might get matched to more than one plot element. But the problem says each scene contains \"a <strong>single</strong> plot element.\"" ),
+        new Question( 203, "OSS", "moves that she has learned", "moves in one message", "move", "position",
+            "<p>Felicia is learning flag semaphore, a system for sending messages by making different moves with flags held in each hand. She can send different messages by making different moves in different sequences. (It is possible to make the same move more than once in a message.)</p><p>How many different messages can Felicia send, if there are {0} {1} and {2} {3}?</p>",
+            "<p>Now suppose there are {0} {1} and {2} {3}. How many different messages can Felicia send now?</p>",
+            "According to your answer, some of the movies in one message might not get \"used.\" That would mean those positions in the message were \"blank,\" which makes no sense. Also, in your answer, the same move in one message might get matched to more than one of the movies Felicia has learned. That would mean she would make multiple moves at the same time, which the problem did not say is allowed." ),
+        new Question( 204, "OSS", "games on his phone", "hours to kill", "game", "hour",
+            "<p>Suppose Jose has several hours to kill. He spends each hour playing one of the games on his phone. (He might play the same game on more than one hour.)</p><p>In how many different ways can he kill the time, if there are {0} {1} and {2} {3}?</p>",
+            "<p>Now suppose there are {0} {1} and {2} {3}. In how many different ways can he kill the time now?</p>",
+            "According to your answer, some of the hours might not get \"used,\" meaning that Jose does not play any game during those hours. However, the problem says he \"spends <strong>each</strong> hour\" playing a game. Also, in your answer, the same hour might get matched to more than one game. But the problem says he only plays \"<strong>one</strong> of the games\" in a given hour." ),
+        new Question( 205, "OSS", "distinct hieroglyphs", "hieroglyphs in each sentence", "hieroglyph", "sentence position",
+            "<p>Archaeologists discover records of an ancient language whose writing system was based on hieroglyphs.  Strangely, each sentence in the language contained the same number of hieroglyphs (and a given hieroglyph could be repeated multiple times within a sentence).</p><p>How many different sentences were possible in this language, if there were {0} {1} and {2} {3}?</p>",
+            "<p>Now suppose there are {0} {1} and {2} {3}. How many different sentences were possible in this language now?</p>",
+            "According to your answer, some of the hieroglyphs in a sentence might not get \"used.\" That would mean those positions in the sentence were \"blank,\" which makes no sense. Also, in your answer, the same position in a sentence might get matched to more than one distinct hieroglyph. That would mean multiple hieroglyphs are written in the same position, which makes no sense." ),
+        new Question( 206, "OSS", "shops in the shopping center", "pages in a booklet", "shop", "page",
+            "<p>A clerk at a shopping center passes out coupon booklets to shoppers.  Each page of the booklets contains a coupon for one of the shops in the center, selected randomly.  (It is possible for more than one page to contain coupons for the same shop.)</p><p>How many different coupon booklets are possible, if there are {0} {1} and {2} {3}?</p>",
+            "<p>Now suppose there are {0} {1} and {2} {3}. How many different coupon booklets are possible now?</p>",
+            "According to your answer, some of the pages might not get \"used.\" However, the problem says \"<strong>each</strong> page\" contains a coupon. Also, in your answer, the same page might get matched to more than one shop. But the problem says each page contains a coupon for \"<strong>one</strong> of the shops.\"" ),
+        // problems 207-212 correspond to problems 7-12 in experiment 6
+        // there are minor wording changes, same as in experiment 7
+        // short versions and feedback are added in experiment 8 (but are mostly same as in experiment 6)
+        new Question( 207, "OSS", "keys in the set", "notes in each melody", "key", "note",
+            "<p>A piano student, when bored, plays random melodies on the piano. Each melody is the same number of notes long, and uses only keys from a fixed set of keys. (It is possible to play the same key more than once in a sequence.)</p><p>How many different melodies are possible, if there are {0} {1} and {2} {3}?</p>",
+            "<p>Now suppose there are {0} {1} and {2} {3}. How many different sequences are possible now?</p>",
+            "According to your answer, some of the notes might not get \"used.\" That would mean those positions in the melody were \"blank,\" which makes no sense. Also, in your answer, the same note might get matched to more than one key. That would mean multiple keys are played at the same position in the melody, which the problem did not say is allowed." ),
+        new Question( 208, "OSS", "allowable letters", "letters in each password", "letter", "position",
+            "<p>A website generates user passwords by selecting a certain number of letters randomly from a set of allowable letters. (It is possible to use the same letter more than once in a password.)</p><p>How many different passwords are possible, if there are {0} {1} and {2} {3}?</p>",
+            "<p>Now suppose there are {0} {1} and {2} {3}. How many different passwords are possible now?</p>",
+            "According to your answer, some of the positions might not get \"used.\" That would mean those positions were \"blank,\" which makes no sense. Also, in your answer, the same position might get matched to more than one letter. That would mean multiple letters were generated for the same position in the password, which also makes no sense." ),
+        new Question( 209, "OSS", "buttons", "flashes per sequence", "button", "flash", 
+            "<p>The game Simon uses a disk with several different-colored buttons. The buttons flash in sequence and then the player has to push the buttons in the same sequence - otherwise they get a shock. (It is possible for the same button to flash more than once in a sequence.)</p><p>How many different sequences are possible, if there are {0} {1} and {2} {3}?</p>",
+            "<p>Now suppose there are {0} {1} and {2} {3}. How many different sequences are possible now?</p>",
+            "According to your answer, some of the flashes in the sequence might not get \"used.\" That just means having fewer flashes total, which would contradict the assumption about how many flashes there are. Also, in your answer, the same flash might get matched to more than one button. That would mean multiple buttons flash at the same time, which the problem did not say is possible." ),
+        new Question( 210, "OSS", "permissible numbers", "numbers on each ticket", "number", "position",
+            "<p>In a certain city, municipal lottery tickets are printed using series of numbers chosen randomly from a list of permissible numbers. (It is possible for the same number to appear at more than one position in a series.)</p><p>How many different lottery tickets are possible, if there are {0} {1} and {2} {3}?</p>",
+            "<p>Now suppose there are {0} {1} and {2} {3}. How many different lottery tickets are possible now?</p>",
+            "According to your answer, some of the number positions might not get \"used.\" That would mean no number at all appears in those positions, which the problem did not say is possible. Also, in your answer, more than one number could be chosen for the same position. That would make no sense." ),
+        new Question( 211, "OSS", "answers for each question", "questions on the exam", "answer", "question",
+            "<p>A student is taking a multiple choice exam. Each question has the same number of answers and the student just chooses an answer randomly. (It is possible for him to choose the same answer for more than one question.)</p><p>In how many different ways can he fill out the exam, if there are {0} {1} and {2} {3}?</p>",
+            "<p>Now suppose there are {0} {1} and {2} {3}. In how many different ways can he fill out the exam now?</p>",
+            "According to your answer, some of the questions might not get \"used.\" But the problem says he chooses an answer for each question. Also, in your answer, the same question could be matched to more than one answer. But the problem says that he chooses <strong>an</strong> answer, meaning <strong>one</strong> answer, for each question." ),
+        new Question( 212, "OSS", "dresses", "days with dances", "dress", "day",
+            "<p>Elizabeth is going to attend a dance every day for the next several days. Each day, she chooses a dress to wear to the dance. (It is possible for her to choose the same dress on more than one day.)</p><p>In how many different ways can she choose her dresses, if there are {0} {1} and {2} {3}?</p>",
+            "<p>Now suppose there are {0} {1} and {2} {3}. In how many different ways can she choose her dresses now?</p>",
+            "According to your answer, some of the days might not get \"used.\" But the problem says she chooses a dress <strong>\"each day.\"</strong> Also, in your answer, the same day could be matched to more than one dress. But the problem says that she chooses <strong>a</strong> dress, meaning <strong>one</strong> dress, each day." ),
+        new Question( 213, "OSS", "modes of transport", "legs of the trip", "mode", "leg",
+            "<p>Tonia is taking a trip from Chicago to Los Angeles, passing through several cities on the way. On each leg of the trip, she can use any of several modes of transport, such as bus, train, or airplane. (There might be more than one leg of the trip for which she uses the same mode of transport.)</p><p>In how many different ways can she travel from Chicago to Los Angeles, if there are {0} {1} and {2} {3}?</p>",
+            "<p>Now suppose there are {0} {1} and {2} {3}. In how many different ways can she travel from Chicago to Los Angeles now?</p>",
+            "According to your answer, some of the legs of the trip might not get \"used.\" That would mean Tonia did not choose <strong>any</strong> mode of transport for those legs, which makes no sense. Also, in your answer, the same leg might get matched to more than one mode of transport, which makes no sense." ),
+        new Question( 214, "OSS", "controller buttons", "button presses per combination", "controller button", "button press",
+            "<p>In a video game about martial arts fighting, you can make a character do cool moves by pressing several buttons on the controller in a certain order, such as \"up-left-down-...\". Each combination consists of the same number of button presses. (The same button might need to be pressed more than once in a given combination.)</p><p>How many different combinations are possible, if there are {0} {1} and {2} {3}?</p>",
+            "<p>Now suppose there are {0} {1} and {2} {3}. How many different combinations are possible now?</p>",
+            "According to your answer, some of the button presses per combination might not get \"used.\" That would mean those positions in the combination were \"blank,\" which makes no sense. Also, in your answer, the same button press might get matched to more than one button. That would mean that more than one button was pressed at the same time, which the problem did not say is allowed." ),
+        new Question( 215, "OSS", "possible hand gestures", "gestures in a handshake", "possible movement", "movement position",
+            "<p>The Gamma Gamma Gamma fraternity wants to invent a special handshake for fraternity brothers. The handshake will involve a series of hand gestures such as bumping fists, high five, or thumbs-up. (It is possible to repeat the same gesture more than once during the handshake.)</p><p>How many different handshakes are possible, if there are {0} {1} and {2} {3}?</p>",
+            "<p>Now suppose there are {0} {1} and {2} {3}. How many different handshakes are possible now?</p>",
+            "According to your answer, some of the gestures in a handshake might not get \"used.\" That would mean those positions in the handshake were \"blank,\" which makes no sense. Also, in your answer, the same position might get matched to more than one possible gesture. That would mean more than one gesture was made at the same time, which the problem did not say is allowed." ),
+        new Question( 216, "OSS", "different words", "words per line", "word", "position",
+            "<p>Suppose Phil owns a \"magnetic poetry\" set which can be used to create lines of poetry by sticking magnetic words onto the refrigerator. Suppose he creates different lines which all contain the same number of words. (He has an unlimited supply of each word, so he can use the same word more than once in a single line.)</p><p>How many different lines of poetry can Phil create if there are {0} {1} and {2} {3}?</p>",
+            "<p>Now suppose there are {0} {1} and {2} {3}. How many different lines of poetry can Phil create now?</p>",
+            "According to your answer, some of the positions in a line might not get \"used.\" That would mean those positions were \"blank,\" which makes no sense. Also, in your answer, the same position might get matched to more than one different word. That would mean Phil put more than one word in the same position in a sentence, which makes no sense." ),
+        new Question( 217, "OSS", "bead materials", "beads on each bracelet", "material", "bead",
+            "<p>A jeweler makes bracelets by stringing together beads made of different materials, such as gold, silver, titanium, etc. Each bracelet has the same number of beads on it. (It is possible for the same bead material to be repeated more than once on a single bracelet.)</p><p>How many different bracelets are possible, if there are {0} {1} and {2} {3}?</p>",
+            "<p>Now suppose there are {0} {1} and {2} {3}. How many different bracelets are possible now?</p>",
+            "According to your answer, some of the bead positions on a bracelet might not get \"used.\" That would mean those positions were \"blank,\" which makes no sense. Also, in your answer, more than one bead material might get matched to the same bead position, which is impossible because the problem implies that each bead has only one material." ),
+        new Question( 218, "OSS", "flavors", "layers in each cake", "flavor", "layer",
+            "<p>A baker is making layer cakes by selecting various flavors of cakes to stack in layers.  He chooses the layer flavors randomly from the selection of flavors he has in his store, such as chocolate, vanilla, red velvet, etc. (It is possible to use the same flavor more than once in a cake.)</p><p>How many different layer cakes are possible if there are {0} {1} and {2} {3}?</p>",
+            "<p>Now suppose there are {0} {1} and {2} {3}. How many different layer cakes are possible now?</p>",
+            "According to your answer, some of the layers might not get \"used.\" That would make no sense. Also, in your answer, more than one flavor might get matched to the same layer. But the problem implies that the baker only used one flavor in a given layer." ),
+        new Question( 219, "OSS", "breeds of flower", "flowers per row", "breed", "flower",
+            "<p>A large mansion grows many breeds of flower, like roses, pansies, and irises, which are used to decorate the mansion.  The housekeeper places a row of flowers on each window sill, using the same number of flowers in each row, but varying the specific breeds and their order.  (The same breed can be used more than once in a row.)</p><p>How many different rows of flowers are possible, if there are {0} {1} and {2} {3}?</p>",
+            "<p>Now suppose there are {0} {1} and {2} {3}. How many different rows of flowers are possible now?</p>",
+            "According to your answer, some of the positions in a row might not get \"used.\" That would mean those positions were empty, which makes no sense. Also, in your answer, the same position might get matched to more than one breed of flower. That would mean multiple breeds of flower are placed in the same place, which the problem did not say is allowed." ),
+        new Question( 220, "OSS", "cellphone models", "phones in each row", "model", "position",
+            "<p>Each display case in a cellphone store contains a row of cellphones selected from the models currently on sale.  The cases are all the same size, so there are the same number of phones in each row.  (A given cellphone model might appear multiple times in a single row, for example if it is a very popular phone.)</p><p>How many different ways are there to fill a display case, if there are {0} {1} and {2} {3}?</p>",
+            "<p>Now suppose there are {0} {1} and {2} {3}. How many different ways are there to fill a display case now?</p>",
+            "According to your answer, some of the positions in a row might not get \"used.\" That would mean those positions were empty, which makes no sense. Also, in your answer, the same position might get matched to more than one cellphone model. That would mean multiple cellphones are placed in the same place, which makes no sense." )
+    ];
+
+    questions_by_schema["TFR"] = [
+        // TFR questions are copied from exp 7 and none were used before that exp
+        new Question( 301, "TFR", "fonts", "document styles", "font", "document style",
+            "<p>In Microsoft Word, different document styles are used to format text in different parts of the document, such as \"title,\" \"chapter heading,\" \"sub-section heading,\" etc. A font must be assigned to each document style. (It is possible to assign the same font to more than one document style.)</p><p>In how many ways can fonts be assigned to document styles, if there are {0} {1} and {2} {3}?</p>",
+            "<p>Now suppose there are {0} {1} and {2} {3}. In how many ways can fonts be assigned to document styles now?</p>",
+            "According to your answer, some of the document styles might not get \"used.\" However, the problem says a font must be assigned to \"<strong>each</strong> document style.\" Also, in your answer, the same document style might get matched to more than one font. But the problem says <strong>a</strong> font is assigned to each style, meaning only one." ),
+        new Question( 302, "TFR", "ring tones", "types of ring", "ring tone", "type of ring",
+            "<p>A smartphone comes pre-loaded with various ring tones.  For each type of ring, such as \"incoming call,\" \"alarm,\" \"new mail,\" etc., you can set any of the ring tones. (It is possible to set the same ring tone for multiple types of ring.)</p><p>In how many different ways can types of ring be set with ring tones, if there are {0} {1} and {2} {3}?</p>",
+            "<p>Now suppose there are {0} {1} and {2} {3}. In how many different ways can types of ring be set with ring tones now?</p>",
+            "According to your answer, some of the types of ring might not get \"used.\" However, the problem says you can set a ring tone \"for <strong>each</strong> type of ring.\" Also, in your answer, the same type of ring might get matched to more than one ring tone. But the problem implies only one ring tone can be set for each type of ring." ),
+        new Question( 303, "TFR", "icons", "triggers", "icon", "trigger",
+            "<p>Suppose the settings on a computer allow one to set what kind of icon is used for the mouse pointer, e.g. an arrow, a hand, a vertical line, etc. Icons can be set separately for a variety of \"triggers,\" like \"clicking something,\" \"hovering over a link,\" \"waiting for something,\" and so on. (The same icon could be set for more than one trigger.)</p><p>In how many different ways can icons be set for triggers, if there are {0} {1} and {2} {3}?</p>",
+            "<p>Now suppose there are {0} {1} and {2} {3}. In how many different ways can icons be set for triggers now?</p>",
+            "According to your answer, some of the triggers might not get \"used.\" However, the problem implies an icon should be set for every trigger. Also, in your answer, the same trigger might get matched to more than one icon. But the problem says implies only one icon can be set for each trigger." ),
+        new Question( 304, "TFR", "devices", "activities", "device", "activity",
+            "<p>Sharon owns many different electronic devices, like a desktop computer, laptop computer, smartphone, etc., which she uses for activities like homework, surfing the net, and email. For a given activity, she always uses the same device. (She might use the same device for more than one activity.)</p><p>In how many different ways can she choose devices for activities, if there are {0} {1} and {2} {3}?</p>",
+            "<p>Now suppose there are {0} {1} and {2} {3}. In how many different ways can she choose devices for activities now?</p>",
+            "According to your answer, some of the activities might not get \"used.\" However, the problem implies Sharon chooses a device for every activity. Also, in your answer, the same activity might get matched to more than one device. But the problem says Sharon always uses \"the <strong>same</strong> device,\" meaning only one, for a given activity." ),
+        new Question( 305, "TFR", "shapes", "occasions", "shape", "occasion",
+            "<p>Tanisha the baker makes cakes for all occasions, like birthdays, weddings, and anniversaries. She likes to make cakes in different shapes, e.g. round, square, or oval, but for any given occasion, she always uses the same shape. (However, there might be more than one occasion for which she uses the same shape.)</p><p>In how many different ways could she assign shapes of cake to occasions, if there are {0} {1} and {2} {3}?</p>",
+            "<p>Now suppose there are {0} {1} and {2} {3}. In how many different ways could she assign shapes of cake to occasions now?</p>",
+            "According to your answer, some of the occasions might not get \"used.\" However, the problem implies Tanisha chooses a shape for every occasion. Also, in your answer, the same occasion might get matched to more than one shape. But the problem says Tanisha always uses \"the <strong>same</strong> shape,\" meaning only one, for a given occasion." ),
+        new Question( 306, "TFR", "screen savers", "types of software", "screen saver", "software",
+            "<p>Alma's new computer comes with multiple different screen savers. The screen saver can be set separately depending on what kind of software is open on the computer, so that, for example, Alma could set one screen saver to activate when using Office software, another for internet browsers, another for games, and so on. (It is also possible to set the same screen saver for more than one type of software.)</p><p>In how many different ways can the screen savers be set up, if there are {0} {1} and {2} {3}?</p>",
+            "<p>Now suppose there are {0} {1} and {2} {3}. In how many different ways can the screen savers be set up now?</p>",
+            "According to your answer, some of the types of software might not get \"used.\" However, the problem implies Alma chooses a screen saver for every type of software. Also, in your answer, the same type of software might get matched to more than one screen saver. But the problem implies only one screen saver can be set for a given type of software." ),
+        new Question( 307, "TFR", "types of bark", "kinds of truffle", "bark", "truffle",
+            "<p>Darren is training his dog to hunt truffles. He trains it to bark differently depending on what kind of truffle it finds: for example, a sharp yip for white truffles, a loud bark for black truffles, a growl for burgundy truffles, and so on. (However, he might train the dog to make the same bark for more than one kind of truffle.)</p><p>In how many different ways can Darren train his dog, if there are {0} {1} and {2} {3}?</p>",
+            "<p>Now suppose there are {0} {1} and {2} {3}. In how many different ways can Darren train his dog now?</p>",
+            "According to your answer, some of the kinds of truffle might not get \"used.\" However, the problem implies Darren chooses a type of bark for every kind of truffle. Also, in your answer, the same kind of truffle might get matched to more than one type of bark. But the problem implies Darren chooses only one type of bark for a given kind of truffle." ),
+        new Question( 308, "TFR", "weapons", "enemies", "weapon", "enemy",
+            "<p>Brandi plays an Orc Barbarian in World of Warcraft. She has many weapons, like axe, sword, and spear, but she always uses the same weapon for a particular kind of enemy, such as humans, elves, and dwarves. (There might be more than one kind of enemy for which she uses the same weapon.)</p><p>In how many different ways can Brandi choose weapons for different enemies, if there are {0} {1} and {2} {3}?</p>",
+            "<p>Now suppose there are {0} {1} and {2} {3}. In how many different ways can Brandi choose weapons for different enemies now?</p>",
+            "According to your answer, some of the enemies might not get \"used.\" However, the problem implies Brandi chooses a weapon for every type of enemy. Also, in your answer, the same enemy might get matched to more than one weapon. But the problem says Brandi always uses \"the <strong>same</strong> weapon,\" meaning only one, for a particular enemy." ),
+        new Question( 309, "TFR", "pairs of sneakers", "sports that he plays", "pair of sneakers", "sport",
+            "<p>Virgil owns many pairs of sneakers and decides which one to wear depending on what sport he is going to play. For example, he might wear one pair for jogging, another for basketball, another for tennis, and so on. (There might be more than one sport for which he wears the same pair of sneakers.)</p><p>In how many different ways could he match sneakers with sports, if there are {0} {1} and {2} {3}?</p>",
+            "<p>Now suppose there are {0} {1} and {2} {3}. In how many different ways could he match sneakers with sports now?</p>",
+            "According to your answer, some of the sports might not get \"used.\" However, the problem implies Virgil chooses a pair of sneakers for every sport that he plays. Also, in your answer, the same sport might get matched to more than one pair of sneakers. But the problem implies Virgil chooses only one pair of sneakers for a given sport." ),
+        new Question( 310, "TFR", "sets of china", "types of guest", "set", "guest",
+            "<p>A rich family has several sets of china to use for meals. For each type of guest, there is a particular set of china they use, e.g. one set of china for family, one for friends, and one for business acquaintances. (There might be more than one type of guest for which they use the same set of china.)</p><p>In how many different ways could sets of china be matched to types of guests, if there are {0} {1} and {2} {3}?</p>",
+            "<p>Now suppose there are {0} {1} and {2} {3}. In how many different ways could sets of china be matched to types of guests now?</p>",
+            "According to your answer, some of the types of guest might not get \"used.\" However, the problem says they use a set of china \"for <strong>each</strong> type of guest.\" Also, in your answer, the same type of guest might get matched to more than one set of china. But the problem says the family uses \"a <strong>particular</strong> set of china,\" meaning only one, for each type of guest." ),
+        new Question( 311, "TFR", "paper grades", "document categories", "grade", "category",
+            "<p>A print shop has several different grades of paper, and uses a particular grade of paper for each category of document that it prints, e.g. glossy paper for posters, book paper for business documents, bond paper for resumes, etc. (The same paper grade could be used for more than one document category.)</p><p>In how many different ways could paper grades be matched to document categories, if there are {0} {1} and {2} {3}?</p>",
+            "<p>Now suppose there are {0} {1} and {2} {3}. In how many different ways could paper grades be matched to document categories now?</p>",
+            "According to your answer, some of the document categories might not get \"used.\" However, the problem says the shop uses a grade of paper \"for <strong>each</strong> category of document.\" Also, in your answer, the same document category might get matched to more than one paper grade. But the problem says the shop uses \"a <strong>particular</strong> grade of paper,\" meaning only one, for each category of document." ),
+        new Question( 312, "TFR", "knives", "different foods", "knife", "food",
+            "<p>Russell has a few different knives in his kitchen, such as a chef's knife, a paring knife, a cleaver, etc.  For a given food, like vegetables, bread, or meat, he always cuts it with the same knife (but he might use the same knife for more than one food).</p><p>In how many different ways could Russell use knives for food, if there are {0} {1} and {2} {3}?</p>",
+            "<p>Now suppose there are {0} {1} and {2} {3}. In how many different ways could Russell use knives for food now?</p>",
+            "According to your answer, some of the foods might not get \"used.\" However, the problem implies Russel chooses a knife for every different food. Also, in your answer, the same food might get matched to more than one knife. But the problem says Russel always cuts a given foor with \"the <strong>same</strong> knife,\" meaning only one." ),
+        new Question( 313, "TFR", "fragrances", "product variants", "fragrance", "variant",
+            "<p>A company that makes personal care products is launching a new line of soap that includes several product variants, e.g. anti-perspirant soap, soap for sensitive skin, refreshing soap, and so on.  The product designer must give each product variant a fragrance, like lemon, lavender, or mint.  (More than one product variant could get the same fragrance.)</p><p>How many ways are there to pair fragrances with product variants, if there are {0} {1} and {2} {3}?</p>",
+            "<p>Now suppose there are {0} {1} and {2} {3}. How many ways are there to pair fragrances with product variants now?</p>",
+            "According to your answer, some of the product variants might not get \"used.\" However, the problem says the designer must give \"<strong>each</strong> product variant\" a fragrance. Also, in your answer, the same product variant might get matched to more than one fragrance. But the problem says each product is given <strong>a</strong> fragrance, meaning only one." ),
+        new Question( 314, "TFR", "types of symbol", "types of building", "symbol", "building",
+            "<p>Suppose you are designing a map and you have several types of symbol which can be used to represent different types of building.  For example, red hearts could represent hospitals, yellow rectangles could represent schools, and so on.  (The same type of symbol could represent more than one type of building, since you might not need to distinguish between some types of building.)</p><p>In how many ways could symbols be matched to buildings, if there are {0} {1} and {2} {3}?</p>",
+            "<p>Now suppose there are {0} {1} and {2} {3}. In how many ways could symbols be matched to buildings now?</p>",
+            "According to your answer, some of the types of building might not get \"used.\" However, the problem implies you should choose a type of symbol for every type of building. Also, in your answer, the same type of building might get matched to more than one symbol. But the problem implies that only one type of symbol is used to represent a given type of building." ),
+        new Question( 315, "TFR", "bags", "types of outing", "bag", "outing",
+            "<p>Milton owns several different bags, like a backpack, a suitcase, a duffel bag, and so on.  For a given type of outing, like going to school, going camping, or traveling, he always takes the same bag.  (However, there might be more than one type of outing for which he takes the same bag.)</p><p>In how many different ways could Milton match up bags with types of outing, if there are {0} {1} and {2} {3}?</p>",
+            "<p>Now suppose there are {0} {1} and {2} {3}. In how many different ways could Milton match up bags with types of outing now?</p>",
+            "According to your answer, some of the types of outing might not get \"used.\" However, the problem implies Milton chooses a bag for every type of outing. Also, in your answer, the same type of outing might get matched to more than one bag. But the problem says Milton always takes \"the <strong>same</strong> bag,\" meaning only one, for a given type of outing." ),
+        new Question( 316, "TFR", "kinds of chart", "data sets", "chart", "data set",
+            "<p>Suppose you are preparing a report about the population of a certain city, which will include various data sets about things like sex, age, and income.  Each data set should be displayed using one of several kinds of chart, such as pie chart, bar chart, or line graph.  (Of course, more than one data set can be displayed using the same kind of chart.)</p><p>In how many different ways could data sets be matched up with kinds of chart, if there are {0} {1} and {2} {3}?</p>",
+            "<p>Now suppose there are {0} {1} and {2} {3}. In how many different ways could data sets be matched up with kinds of chart now?</p>",
+            "According to your answer, some of the data sets might not get \"used.\" However, the problem says a kind of chart should be chosen for \"<strong>each</strong> data set.\" Also, in your answer, the same data set might get matched to more than one kind of chart. But the problem says each data set is displayed \"using <strong>one</strong>\" kind of chart." ),
+        new Question( 317, "TFR", "destinations", "holidays", "destination", "holiday",
+            "<p>A travel agency holds a promotion during several holidays during the year, like Thanksgiving, Christmas, Spring Break, etc.  For each holiday, they offer discounted travel to one out of of several possible travel destinations.  (They might give discounts to the same destination for more than one holiday.)</p><p>In how many different ways could the agency match destinations to holidays, if there are {0} {1} and {2} {3}?</p>",
+            "<p>Now suppose there are {0} {1} and {2} {3}. In how many different ways could the agency match destinations to holidays now?</p>",
+            "According to your answer, some of the holidays might not get \"used.\" However, the problem says the agency chooses a destination \"for <strong>each</strong> holiday.\" Also, in your answer, the same holiday might get matched to more than one destination. But the problem says the agency chooses <strong>one</strong> travel destination for each holiday." ),
+        new Question( 318, "TFR", "competing companies", "development projects", "company", "project",
+            "<p>A city government is planning several urban development projects, including a new bridge, a library, and a park.  For each project, the government will contract with one of several construction companies to carry it out.  (They might contract with the same company for more than one project.)</p><p>In how many different ways could the government assign contracts for the projects, if there are {0} {1} and {2} {3}?</p>",
+            "<p>Now suppose there are {0} {1} and {2} {3}. In how many different ways could the government assign contracts for the projects now?</p>",
+            "According to your answer, some of the development projects might not get \"used.\" However, the problem says the government contracts with a company \"for <strong>each</strong> project.\" Also, in your answer, the same project might get matched to more than one company. But the problem says for each project, the government will \"contract with <strong>one</strong>\" company." ),
+        new Question( 319, "TFR", "email addresses", "kinds of website", "address", "website",
+            "<p>Brandon has several email addresses.  When he enters his email address in a website, he always uses the same address for a given type of website, so he could use one address for social networks, a different one for online banking, and so on.  (However, he could use the same address for more than one kind of website.)</p><p>In how many different ways could Brandon pair up addresses with kinds of website, if there are {0} {1} and {2} {3}?</p>",
+            "<p>Now suppose there are {0} {1} and {2} {3}. In how many different ways could Brandon pair up addresses with kinds of website now?</p>",
+            "According to your answer, some of the kinds of website might not get \"used.\" However, the problem implies Brandon chooses an address for every type of website. Also, in your answer, the same kind of website might get matched to more than one address. But the problem says Brandon always uses \"the <strong>same</strong> address,\" meaning only one, for a given type of website." ),
+        new Question( 320, "TFR", "kinds of diagram", "concepts", "diagram", "concept",
+            "<p>A teacher is presenting a lesson involving many difficult concepts, so she illustrates each concept with a diagram, e.g. a Venn diagram, a tree diagram, a flowchart, etc.  (She could illustrate more than one concept with the same kind of diagram.)</p><p>In how many different ways could she assign diagrams to concepts, if there are {0} {1} and {2} {3}?</p>",
+            "<p>Now suppose there are {0} {1} and {2} {3}. In how many different ways could she assign diagrams to concepts now?</p>",
+            "According to your answer, some of the concepts might not get \"used.\" However, the problem says the teacher \"illustrates <strong>each</strong> concept.\" Also, in your answer, the same concept might get matched to more than one kind of diagram. But the problem says the teacher illustrates each concept \"with <strong>a</strong> diagram,\" meaning only one." )
+    ];        
+        
+    return questions_by_schema;
+}
+
+// getTrainingQuestionsBySchema
+//      returns a certain number of training questions all drawn from a given schema ordered randomly
+function getTrainingQuestionsBySchema( schema, num_questions ) {
+    return( shuffle( getTrainingQuestions()[schema] ).slice(0,num_questions) );
+}
+
+// getTrainingQuestionsByIds
+//      given an array of question ids, returns an array of the corresponding questions
+function getTrainingQuestionsByIds( quesIDs ) {
+    var questions_by_schema = getTrainingQuestions();
+    var original_questions = [];
+    for ( var schema in questions_by_schema ) {
+        original_questions = original_questions.concat( questions_by_schema[schema] );
+    }
+    var filtered_questions = new Array( quesIDs.length );
+    for ( var i=0; i<original_questions.length; i++ ) {
+        if ( quesIDs.indexOf( original_questions[i].quesID ) != -1 ) {
+            filtered_questions[ quesIDs.indexOf( original_questions[i].quesID ) ] = original_questions[i];
+        }
+    }
+    return filtered_questions;
+}
+
+// generateTrainingFeedback: method of Question class
+//      provides feedback for responses to training version of question
+//      should only be called if instantiate has already been called
+var generateTrainingFeedback = function( accuracies, mode ) {
+    var feedback = { "overall": "", "by_question": new Array( accuracies.length ), "delay": 0 };
+    if ( Math.min.apply( null, accuracies )==1 ) {
+        feedback.overall    = "<p><img src='images/small-green-check-mark-th.png' class='icon'>  Great job! All of your answers are correct. Click 'OK' to continue.</p>";
+        feedback.delay      = { "auto": 0, "free": 500, "forced": 7500 }[ mode ];
+    } else {
+        if ( 3-sum(accuracies) == 1 ) {
+            feedback.overall    = "<p><img src='images/small-red-x-mark-th.png' class='icon'>  Sorry, one of your answers is incorrect.</p><p>The incorrect answer has been highlighted, and an explanation of why it is incorrect is displayed to the right. After reading the explanation, click 'Try again,' and the page will be reloaded with different numbers and the order of answers randomized.</p><p>The 'Try again' button will activate after a delay so that you have time to read the explanation.</p>";
+        } else {
+            feedback.overall    = "<p><img src='images/small-red-x-mark-th.png' class='icon'>  Sorry, some of your answers are incorrect.</p><p>The incorrect answers have been highlighted, and explanations of why they are incorrect are displayed to the right. Please read the explanations, click 'Try again,' and the page will be reloaded with different numbers and the order of answers randomized.</p><p>The 'Try again' button will activate after a delay so that you have time to read the explanations.</p>";
+        }
+        for ( var i=0; i<accuracies.length; i++ ) {
+            if ( accuracies[i]==0 ) {
+                if ( i==0 ) {   // relational prompt
+                    feedback.by_question[i] = this.explanation;
+                } else {        // final answers
+                    feedback.by_question[i] = "Because <strong>ONE</strong> of the " + this.base_noun + " is chosen for <strong>EACH</strong> of the " + this.exp_noun + ",<br>the answer should be <i><b>(number of " + this.base_noun + ") <sup>(number of " + this.exp_noun + ")</sup></b></i>.";
+                }
+            }
+        }
+        feedback.delay      = { "auto": 0, "free": 1000, "forced": 7500 }[ mode ];
+    }
+    return feedback;
+}
+
 
 //////////////////////////////////
 // Pretest and Posttest
@@ -535,6 +608,20 @@ function addTest( exp_struct, mode, test_section, questions ) {
 // Training
 //////////////////////////////////////////////////////
 
+/*
+Experimental condition is determined by the condVariation variable, which can take 4 different values.
+
+0 - Nonvaried condition. All training examples will be drawn from the same schema (and which one it is is determined by condVersion).
+
+1 - Adaptive varied condition. The first example is drawn from a schema determined by condVersion, and subsequent examples are also drawn from this schema until participant reaches criterion. After that, examples are drawn from all training schemas in interleaved fashion.
+
+2 - Yoked varied condition. The sequence of training examples - and thus, of schemas - is exactly matched to that of a previous participant in the adaptive varied condition.
+
+3 - Yoked shuffled condition. The sequence of training examples is a random permutation of that of a previous participant in the adaptive varied condition.
+
+Note that for conditions 0, 2, and 3, the sequence of examples is completely determined before the training begins, but in condition 1, it is determined dynamically depending on performance during training.
+*/
+
 function addTraining( exp_struct, mode, condVariation, condVersion, yokingSeq ) {
 
     // unselect subsections of training if desired (for testing only)
@@ -552,49 +639,144 @@ function addTraining( exp_struct, mode, condVariation, condVersion, yokingSeq ) 
 
 function addTrainingExposition( exp_struct, mode, condVariation, condVersion ) {
 
-    // based on Exp 3 with no or minor changes, with following exceptions:
-    //  replaced * with multiplication sign and unified answers in text with answer formatting in actual questions
-    //  added question format to examples
-    //  switched to survey plugin instead of text plugin
-    //  added last page of exposition to transition to training examples
-    //  removed <p>Press <strong>ENTER</strong> to continue.</p> and similar
+    // basically same as verbal frame condition in experiment 6, except using terminology "options" instead of "alternatives", added references to SWR, and with TFR added
     
-    // NOTE: currently requires first example to be either PCO or OSS!
+    // getContent is a helper function which retrieves problem statements and solution statements for the example problems used in the training exposition.
+    var getContent = function( expositionSchema, contentType, problemIdx ) {
+        var result = "";
+        if ( contentType=="Problem" ) {
+            // the result begins with an introduction, which depends on problemIdx
+            result += [ 
+                "<p>All the problems you saw in the previous part are called 'Sampling with Replacement' problems. This section will explain how to solve such problems. Here is an example:</p>",
+                "<p>Now, here is another example:</p>",
+                "<p>Here is a final example:</p>"
+                ][ problemIdx ];
+            // next is the problem statement, which depends on expositionSchema and problemIdx
+            result += {
+                "PCO": [
+                    "<div class='question'><p>Suppose that 2 golfers each have to choose a golf club for their next strike, and there are 5 different golf clubs to choose from. Of course, they can both use the same club, since they don't have to go at the same time. In how many different ways can they make their choices?</p></div><p>Think about this problem and try to get the answer before proceeding.</p>",
+                    "<div class='question'><p>Suppose that there are still 2 golfers, but instead of 5 different golf clubs, there are 8 golf clubs to choose from. In how many different ways can they make their choices now?</p></div><p>Think about how to calculate the answer before proceeding.</p>",
+                    "<div class='question'><p>Suppose that there are 5 different golf clubs as in the first problem, but instead of 2 golfers, there are 8 golfers. In how many different ways can they make their choices now?</p></div><p>Think about how to calculate the answer before proceeding (you don't have to actually calculate it, it's a very large number, but just think about <strong>HOW</strong> to calculate it).</p>"
+                    ][ problemIdx ],
+                "OSS": [
+                    "<div class='question'><p>Suppose that you have 5 different playing cards, face down. You draw one card, then put the card back, shuffle, and draw another card - so, you draw 2 cards altogether, one after the other. How many different outcomes are possible?</p></div><p>Think about this problem and try to get the answer before proceeding.</p>",
+                    "<div class='question'><p>Suppose that you still draw 2 cards, but instead of 5 different cards in the deck, there are 8 different cards you could draw. How many outcomes are possible now?</p></div><p>Think about how to calculate the answer before proceeding.</p>",
+                    "<div class='question'><p>Now, suppose that there are 5 different cards as in the first problem, but instead of drawing 2 times, you draw 8 times. How many outcomes are possible now?</p></div><p>Think about how to calculate the answer before proceeding (you don't have to actually calculate it, it's a very large number, but just think about <strong>HOW</strong> to calculate it).</p>"
+                    ][ problemIdx ],
+                "TFR": [
+                    // TBD
+                    "<div class='question'><p>Suppose that a competitive swimmer practices swimming in 2 styles: freestyle on some days and butterfly on other days. She has 5 different swimsuits and always uses the same swimsuit when practicing a given style, but could use either the same or different swimsuits for practicing different styles. In how many different ways could she assign swimsuits to swimming styles?</p></div><p>Think about this problem and try to get the answer before proceeding.</p>",
+                    "<div class='question'><p>Suppose that there are still 2 swimming styles, but instead of 5 different swimsuits, there are 8 swimsuits. In how many different ways can the swimmer assign swimsuits to swimming styles now?</p></div><p>Think about how to calculate the answer before proceeding.</p>",
+                    "<div class='question'><p>Now, suppose that there are 5 different swimsuits as in the first problem, but instead of 2 swimming styles, there are 8 styles, e.g. freestyle, butterfly, breaststroke, backstroke, .... In how many different ways can the swimmer assign swimsuits to swimming styles now?</p></div><p>Think about how to calculate the answer before proceeding (you don't have to actually calculate it, it's a very large number, but just think about <strong>HOW</strong> to calculate it).</p>"
+                    ][ problemIdx ]
+                }[ expositionSchema ];
+            return result;
+        } else if ( contentType=="Solution" ) {
+            // the result begins with a statement of the answer, which only depends on problemIdx
+            var base    = [ 5, 8, 5 ][ problemIdx ];
+            var exp     = [ 2, 2, 8 ][ problemIdx ];
+            var answer  = createAnswer( base, exp );
+            result      += "<p>The correct answer is " + answer + ". Here's how to get the answer:</p><div class='box'>";
+            // next we show a representation of the problem, which also depends on expositionSchema:
+            result      += {
+                "PCO": "<p>For <strong>EACH</strong> of the golfers, <strong>ONE</strong> of the golf clubs is chosen.</p>",
+                "OSS": "<p>For <strong>EACH</strong> draw, <strong>ONE</strong> of the cards is chosen.</p>",
+                "TFR": "<p>For <strong>EACH</strong> swimming style, <strong>ONE</strong> of the swimsuits is chosen.</p>"
+                }[ expositionSchema ];
+            // finally we show an explanation, which depends on problemIdx and expositionSchema
+            result += {
+                "PCO": [
+                    "<p>So, there are 5 ways to choose a golf club for the first golfer. <strong>For each of these ways,</strong> there are 5 ways to choose a golf club to the second golfer. So, altogether, there are " + answer + " ways to choose golf clubs for the two golfers.</p>",
+                    "<p>Because now there are 8 golf clubs, there are 8 ways to choose a golf club for the first golfer, and <strong>for each of these ways,</strong> there are 8 ways to choose a golf club for the second golfer. So, altogether, there are " + answer + " ways of choosing golf clubs for the two golfers.</p>",
+                    "<p>Because there are 5 golf clubs, there are 5 ways to choose a golf club for the first golfer, and <strong>for each of these ways</strong>, there are 5 ways to choose a golf club for the second golfer, so we multiply 5\xD75 to get 25 ways of choosing golf clubs for the first two golfers.</p><p><strong>For each of those 25 ways,</strong> there are 5 ways to choose a golf club for the third golfer, so we multiply by 5 again to get 5\xD75\xD75=125 ways of choosing golf clubs for the first three golfers.</p><p>Continuing in this way, we would multiply 5 by itself as many times as there are golfers, that is, 8 times. So the answer is " + answer + ".</p>"
+                    ][ problemIdx ],
+                "OSS": [
+                    "<p>So, there are 5 ways to choose a card on the first draw. <strong>For each of these ways,</strong> there are 5 ways to choose a card on the second draw. So, altogether, there are " + answer + " ways to choose cards on the two draws together.</p>",
+                    "<p>Because now there are 8 cards, there are 8 ways to choose a card on the first draw, and <strong>for each of these ways,</strong> there are 8 ways to choose a card on the second draw. So, altogether, there are " + answer + " ways of choosing cards on the two draws together.</p>",
+                    "<p>Because there are 5 cards, there are 5 ways to choose a card on the first draw, and <strong>for each of these ways</strong>, there are 5 ways to choose a card on the second draw, so we multiply 5\xD75 to get 25 ways of choosing cards on the first two draws.</p><p><strong>For each of those 25 ways,</strong> there are 5 ways to choose a card on the third draw, so we multiply by 5 again to get 5\xD75\xD75=125 ways of choosing cards one the first three draws.</p><p>Continuing in this way, we would multiply 5 by itself as many times as there are draws, that is, 8 times. So the answer is " + answer + ".</p>"
+                    ][ problemIdx ],
+                "TFR": [
+                    "<p>So, there are 5 ways the swimmer could assign a swimsuit for practicing freestyle. <strong>For each of these ways,</strong> there are 5 ways she could assign a swimsuit for practicing butterfly. So, altogether, there are " + answer + " ways she could assign swimsuits to the two styles together.</p>",
+                    "<p>Because now there are 8 swimsuits, there are 8 ways the swimmer could assign a swimsuit for practicing freestyle, and <strong>for each of these ways,</strong> there are 8 ways she could assign a swimsuit for practicing butterfly. So, altogether, there are " + answer + " ways she could assign swimsuits to the two styles together.</p>",
+                    "<p>Because there are 5 swimsuits, there are 5 ways the swimmer could assign a swimsuit for practicing freestyle, and <strong>for each of these ways,</strong> there are 5 ways she could assign a swimsuit for practicing the second style, butterfly, so we multiply 5\xD75 to get 25 ways she could assign swimsuits to the first two swimming styles.</p><p><strong>For each of those 25 ways,</strong> there are 5 ways to she could assign swimsuits to the third swimming style, breaststroke, so we multiply by 5 again to get 5\xD75\xD75=125 ways she could assign swimsuits to the first three swimming styles.</p><p>Continuing in this way, we would multiply 5 by itself as many times as there are swimming styles, that is, 8 times. So the answer is " + answer + ".</p>"                    
+                    ][ problemIdx ]
+                }[ expositionSchema ];
+            result  += "</div>";
+        } else if ( contentType=="Generalization" ) {
+            result += "<p>To generalize, Sampling with Replacement problems always involve a situation where, for <strong>EACH</strong> of one thing called \"selections,\" <strong>ONE</strong> of another thing called \"options\" is chosen. Once you figure out which thing is which, getting the answer is easy. The number of possible outcomes is just the number of options multiplied by itself as many times as the number of selections. In other words,</p><div class='box'><p>If, for <strong>EACH</strong> of one thing called \"selections,\" <strong>ONE</strong> of another thing called \"options\" is chosen,<br>then the number of possible outcomes is <b><i>(options)<sup>(selections)</sup></i></b>.</p></div>";
+            result += {
+                "PCO": "<p>In each of the golf examples, for <strong>EACH</strong> of the golfers, <strong>ONE</strong> of the golf clubs was chosen. So the answer was <span style='white-space:nowrap'><b><i>(number of Clubs)<sup>(number of Golfers)</sup></i></b>.</span></p>",
+                "OSS": "<p>In each of the card drawing examples, for <strong>EACH</strong> of the draws, <strong>ONE</strong> of the cards was chosen. So the answer was <span style='white-space:nowrap'><b><i>(number of Cards)<sup>(number of Draws)</sup></i></b>.</span></p>",
+                "TFR": "<p>In each of the swimsuit examples, for <strong>EACH</strong> of the swimming styles, <strong>ONE</strong> of the swimsuits was chosen. So the answer was <span style='white-space:nowrap'><b><i>(number of Swimsuits)<sup>(number of Swimming Styles)</sup></i></b>.</span></p>"
+                }[ expositionSchema ];
+            result += "<p>So, to solve these problems, you just need to figure out what are the options and the selections in this sentence: \"For <strong>EACH</strong> of the _____ (selections), <strong>ONE</strong> of the ______ (options) is chosen.\" Then the answer is just <span style='white-space:nowrap'><b><i>(number of Options)<sup>(number of Selections)</sup></i></b>.</span></p>";
+        }
+        return result;
+    }
+    
+    var expositionSchema = TRAINING_SCHEMAS[ condVersion ];
 
+    var text = [
+        getContent( expositionSchema, "Problem", 0 ),
+        getContent( expositionSchema, "Solution", 0 ) + getContent( expositionSchema, "Problem", 1 ),
+        getContent( expositionSchema, "Solution", 1 ) + getContent( expositionSchema, "Problem", 2 ),
+        getContent( expositionSchema, "Solution", 2 ),
+        getContent( expositionSchema, "Generalization" )
+        ];
+    
+    text.push( "<p>Now you will have a chance to practice what you just learned with a series of example problems. After each problem, you'll be told whether your answers were correct, and if not, why not.</p><p>A progress bar at the top will show you what proportion of the examples you have completed.</p><p>Let's get started!</p>" );
+
+    addTextBlock( exp_struct, mode, "Training Exposition", text );
+
+    return true;
+
+    /*
+    
     var text_list;
-    var firstExampleSchema = TRAINING_SCHEMAS[ condVersion ];
     if ( firstExampleSchema=="PCO" ) {
         text_list   = [
             "<p>All the problems you saw in the previous part are called 'Sampling with Replacement' problems. Consider the following example:</p><div class='question'><p>Suppose that 2 golfers each have to choose a golf club for their next strike, and there are 5 different golf clubs to choose from. Of course, they can both use the same club, since they don't have to go at the same time. In how many different ways can they make their choices?</p></div><p>Think about this problem and try to get the answer before proceeding.</p>",
             "<p>The correct answer is " + createAnswer( 5, 2 ) + ". There are 5 possible clubs the first golfer could choose. For <strong>EACH</strong> of the ways the first golfer could choose, there are 5 ways the second golfer could choose. So, altogether, there are " + createAnswer( 5, 2 ) + " ways the two golfers could choose.</p><div class='question'><p>Now, suppose that there are still 2 golfers, but instead of 5 different golf clubs, there are 8 golf clubs to choose from. In how many different ways can they make their choices now?</p></div><p>Think about how to calculate the answer before proceeding.</p>",
             "<p>The correct answer is " + createAnswer( 8, 2 ) + ". There are 8 possible clubs the first golfer could choose. For <strong>EACH</strong> of the ways the first golfer could choose, there are 8 ways the second golfer could choose. So, altogether, there are " + createAnswer( 8, 2 ) + " ways the two golfers together could choose.</p><div class='question'><p>Now, suppose that there are 5 different golf clubs as in the first problem, but instead of 2 golfers, there are 8 golfers. In how many different ways can they make their choices now?</p></div><p>Think about how to calculate the answer before proceeding (you don't have to actually calculate it, it's a very large number, but just think about <strong>HOW</strong> to calculate it).</p>",
             "<p>The correct answer is " + createAnswer( 5, 8 ) + ". Just as in the first problem, there are 5 possible clubs the first golfer could choose. For each of those, there are 5 ways the second golfer could choose, so we multiply 5\xD75 to get the number of ways the first <strong>TWO</strong> could choose. For each of <strong>THOSE</strong>, there are 5 ways the <strong>THIRD</strong> golfer could choose, so we multiply by 5 again, and so on.</p><p>In the end, we multiply 5 by itself as many times as there are golfers, that is, 8 times. So the answer is " + createAnswer( 5, 8 ) + ".</p>",
-            "<p>In general, Sampling with Replacement problems always involve selecting from a set of <strong>OPTIONS</strong> a certain number of <strong>TIMES</strong>. And the number of possible outcomes for this kind of problem is always <strong>(OPTIONS)<sup>(TIMES)</sup></strong>, i.e. the number of OPTIONS to the power of the number of TIMES.</p><p>In the previous example, the OPTIONS were the golf clubs, and the TIMES were the golfers, since each golfer chose once. So the answer was (# of Clubs)<sup>(# of Golfers)</sup>.</p><p>All Sampling with Replacement problems can be solved with this formula: <strong>(OPTIONS)<sup>(TIMES)</sup></strong>. You just need to figure out what is the number of OPTIONS chosen from and what is the number of TIMES an option is chosen.</p>" ];
+            "<p>To generalize, in all problems like these, for <strong>EACH</strong> of one thing called \"selections,\" <strong>ONE</strong> of another thing called \"options\" is chosen.  Once you figure out which is which, getting the answer is easy. The number of possible outcomes is just the number of options multiplied by itself as many times as the number of selections. In other words,</p><div class='box'><p>If, for <strong>EACH</strong> of one thing called \"selections,\" <strong>ONE</strong> of another thing called \"options\" is chosen,<br>then the number of possible outcomes is <b><i>(options)<sup>(selections)</sup></i></b>.</p></div><p>In each of the golf examples, for <strong>EACH</strong> of the golfers, <strong>ONE</strong> of the golf clubs was chosen. So the answer was <span style='white-space:nowrap'><b><i>(number of Clubs)<sup>(number of Golfers)</sup></i></b>.</span></p>
+            
+                result += "<p>So, to solve these problems, you just need to figure out what are the alternatives and the selections in this sentence: \"For <strong>EACH</strong> of the _____ (selections), <strong>ONE</strong> of the ______ (alternatives) is chosen.\" Then the answer is just <span style='white-space:nowrap'><b><i>(number of Alternatives)<sup>(number of Selections)</sup></i></b>.</span></p>";
+
+                } else if ( expositionSchema=="OSS" ) {
+                    result += "<p>In each of the card drawing examples, for <strong>EACH</strong> of the draws, <strong>ONE</strong> of the cards was chosen. So the answer was <span style='white-space:nowrap'><b><i>(number of Cards)<sup>(number of Draws)</sup></i></b>.</span></p>";
+                }
+                
+            
+
+            
+            "<p>In general, Sampling with Replacement problems always involve selecting from a set of <strong>OPTIONS</strong> a certain number of <strong>TIMES</strong>. And the number of possible outcomes for this kind of problem is always <strong>(OPTIONS)<sup>(TIMES)</sup></strong>, i.e. the number of OPTIONS to the power of the number of TIMES.</p><p>In the previous example, the OPTIONS were the golf clubs, and the TIMES were the golfers. So the answer was (# of Clubs)<sup>(# of Golfers)</sup>.</p><p>All Sampling with Replacement problems can be solved with this formula: <strong>(OPTIONS)<sup>(TIMES)</sup></strong>. You just need to figure out what is the number of OPTIONS chosen from and what is the number of TIMES an option is chosen.</p>",
+            
+            "According to your answer, some of the consumers might not get \"used.\" However, the problem says the consumers \"are <strong>each</strong> asked\" to choose their favorite. Also, in your answer, the same consumer might get matched to more than one pizza brand. But the problem says that each consumer will choose their favorite, meaning <strong>only one</strong>.\"" ),
+            
+            "<p>How can you know which thing is the OPTIONS and which is the number of TIMES?</p><p>The key point is that <strong>ONE</strong> of the options must be chosen for <strong>EACH</strong> of the times.  A single option could be chosen multiple times, so the options <strong>can be used more than once</strong>.  But only one option can be chosen for each of the times, so the times <strong>cannot be used more than once</strong>.</p><p>In the problems about golfers and golf clubs, the golf clubs were the options, and the golfers were the times, because one and only one golf club was chosen for each golfer. If, instead, one golfer was chosen for each golf club, and the same golfer could be chosen for more than one golf club, then the golfers would be the options and the golf clubs would be the times.</p>"
+            ];
     } else if ( firstExampleSchema=="OSS" ) {
         text_list   = [
             "<p>All the problems you saw in the previous part are called 'Sampling with Replacement' problems. Consider the following example:</p><div class='question'><p>Suppose that you have 5 different playing cards, face down. You draw one card, then put the card back, shuffle, and draw another card - so, you draw 2 cards altogether, one after the other. How many different outcomes are possible?</p></div><p>Think about this problem and try to get the answer before proceeding.</p>",
             "<p>The correct answer is " + createAnswer( 5, 2 ) + ". There are 5 possible cards you could get on the first draw. For <strong>EACH</strong> of the outcomes for the first draw, there are 5 outcomes for the second draw. So, altogether, there are " + createAnswer( 5, 2 ) + " outcomes for the two draws together.</p><div class='question'><p>Now, suppose that you still draw 2 cards, but instead of 5 different cards in the deck, there are 8 different cards you could draw. How many outcomes are possible now?</p></div><p>Think about how to calculate the answer before proceeding.</p>",
             "<p>The correct answer is " + createAnswer( 8, 2 ) + ". There are 8 possible cards you could get on the first draw. For <strong>EACH</strong> of the outcomes for the first draw, there are 8 outcomes for the second draw. So, altogether, there are " + createAnswer( 8, 2 ) + " outcomes for the two draws together.</p><div class='question'><p>Now, suppose that there are 5 different cards as in the first problem, but instead of drawing 2 times, you draw 8 times. How many outcomes are possible now?</p></div><p>Think about how to calculate the answer before proceeding (you don't have to actually calculate it, it's a very large number, but just think about <strong>HOW</strong> to calculate it).</p>",
             "<p>The correct answer is " + createAnswer( 5, 8 ) + ". Just as in the first problem, there are 5 possible cards you could get on the first draw. For each of those, there are 5 cards you could get on the second draw, so we multiply 5\xD75 to get the number of outcomes for the first <strong>TWO</strong> draws. For each of <strong>THOSE</strong>, there are 5 cards you could get on the <strong>THIRD</strong> draw, so we multiply by 5 again, and so on.</p><p>In the end, we multiply 5 by itself as many times as there are draws, that is, 8 times. So the answer is " + createAnswer( 5, 8 ) + ".</p>",
-            "<p>In general, Sampling with Replacement problems always involve selecting from a set of <strong>OPTIONS</strong> a certain number of <strong>TIMES</strong>. And the number of possible outcomes for this kind of problem is always <strong>(OPTIONS)<sup>(TIMES)</sup></strong>, i.e. the number of OPTIONS to the power of the number of TIMES.</p><p>In the previous example, the OPTIONS were the cards in the deck, and the TIMES were the draws, since one card was chosen on each draw. So the answer was (# of Cards)<sup>(# of Draws)</sup>.</p><p>All Sampling with Replacement problems can be solved with this formula: <strong>(OPTIONS)<sup>(TIMES)</sup></strong>. You just need to figure out what is the number of OPTIONS chosen from and what is the number of TIMES an option is chosen.</p>" ];
+            "<p>In general, Sampling with Replacement problems always involve selecting from a set of <strong>OPTIONS</strong> a certain number of <strong>TIMES</strong>. And the number of possible outcomes for this kind of problem is always <strong>(OPTIONS)<sup>(TIMES)</sup></strong>, i.e. the number of OPTIONS to the power of the number of TIMES.</p><p>In the previous example, the OPTIONS were the cards in the deck, and the TIMES were the draws, since one card was chosen on each draw. So the answer was (# of Cards)<sup>(# of Draws)</sup>.</p><p>All Sampling with Replacement problems can be solved with this formula: <strong>(OPTIONS)<sup>(TIMES)</sup></strong>. You just need to figure out what is the number of OPTIONS chosen from and what is the number of TIMES an option is chosen.</p>", 
+            "<p>How can you know which thing is the OPTIONS and which is the number of TIMES?</p><p>The key point is that <strong>ONE</strong> of the options must be chosen for <strong>EACH</strong> of the times.  A single option could be chosen multiple times, so the options <strong>can be used more than once</strong>.  But a single time cannot go with more than one option, so the times <strong>cannot be used more than once</strong>.</p><p>In the problems about drawing playing cards, the golf clubs were the options, and the golfers were the times, because one and only one golf club was chosen for each golfer. If, instead, one golfer was chosen for each golf club, and the same golfer could be chosen for more than one golf club, then the golfers would be the options and the golf clubs would be the times.</p>"
+            ];
     } else if ( firstExampleSchema=="TFR" ) {
-        text_list   = [];       // TBD
+            "<p>All the problems you saw in the previous part are called 'Sampling with Replacement' problems. Consider the following example:</p><div class='question'><p>Suppose that a competitive swimmer practices swimming in 2 styles: freestyle on some days and butterfly on other days. She has 5 different swimsuits and always uses the same swimsuit when practicing a given style, but could use either the same or different swimsuits for practicing different styles. In how many different ways could she assign swimsuits to swimming styles?</p></div><p>Think about this problem and try to get the answer before proceeding.</p>",
+            "<p>The correct answer is " + createAnswer( 5, 2 ) + ". There are 5 possible ways the swimmer could assign a swimsuit for practicing freestyle. For <strong>EACH</strong> of these ways, there are 5 ways she could assign a swimsuit for practicing butterfly. So, altogether, there are " + createAnswer( 5, 2 ) + " ways she could assign swimsuits to the 2 styles together.</p><div class='question'><p>Now, suppose that there are still 2 swimming styles, but instead of 5 different swimsuits, there are 8 swimsuits. In how many different ways can the swimmer assign swimsuits to swimming styles now?</p></div><p>Think about how to calculate the answer before proceeding.</p>",
+            "<p>The correct answer is " + createAnswer( 8, 2 ) + ". There are 8 possible ways the swimmer could assign a swimsuit for practicing freestyle. For <strong>EACH</strong> of these ways, there are 8 ways she could assign a swimsuit for practicing butterfly. So, altogether, there are " + createAnswer( 8, 2 ) + " ways she could assign swimsuits to the 2 styles together.</p><div class='question'><p>Now, suppose that there are 5 different swimsuits as in the first problem, but instead of 2 swimming styles, there are 8 styles, e.g. freestyle, butterfly, breaststroke, backstroke, .... In how many different ways can the swimmer assign swimsuits to swimming styles now?</p></div><p>Think about how to calculate the answer before proceeding (you don't have to actually calculate it, it's a very large number, but just think about <strong>HOW</strong> to calculate it).</p>",
+            "<p>The correct answer is " + createAnswer( 5, 8 ) + ". Just as in the first problem, there are 5 possible ways the swimmer could assign a swimsuit for practicing the first style, freestyle. For each of those, there are 5 ways she could assign a swimsuit for practicing the second style, butterfly, so we multiply 5\xD75 to get the number of ways she could assign swimsuits to the first <strong>TWO</strong> swimming styles. For each of <strong>THOSE</strong>, there are 5 ways she could assign swimsuits to the <strong>THIRD</strong> swimming style, breaststroke, so we multiply by 5 again, and so on.</p><p>In the end, we multiply 5 by itself as many times as there are swimming styles, that is, 8 times. So the answer is " + createAnswer( 5, 8 ) + ".</p>",
+            "<p>In general, Sampling with Replacement problems always involve selecting from a set of <strong>OPTIONS</strong> a certain number of <strong>TIMES</strong>. And the number of possible outcomes for this kind of problem is always <strong>(OPTIONS)<sup>(TIMES)</sup></strong>, i.e. the number of OPTIONS to the power of the number of TIMES.</p><p>In the previous example, the OPTIONS were the swimsuits, and the TIMES were the swimming styles, since one swimsuit was assigned to each swimming style. So the answer was (# of Swimsuits)<sup>(# of Swimming Styles)</sup>.</p><p>All Sampling with Replacement problems can be solved with this formula: <strong>(OPTIONS)<sup>(TIMES)</sup></strong>. You just need to figure out what is the number of OPTIONS chosen from and what is the number of TIMES an option is chosen.</p>" ];
     }
-    text_list.push( "<p>Now you will have a chance to practice what you just learned with a series of example problems. After each problem, you'll be told whether your answers were correct, and if not, why not.</p><p>A progress bar at the top will show you what proportion of the examples you have completed.</p><p>Let's get started!</p>" );
-
-    addTextBlock( exp_struct, mode, "Training Exposition", text_list )
+    */
 }
 
-/*
-Here's the behavior we want. condVariation can take 4 values: Nonvaried, Adaptive Varied, Yoked Varied, and Yoked Shuffled.
-1. Nonvaried. Select one schema, choose 18 examples from that schema, randomly shuffle.
-2. Adaptive Varied. Select one schema, choose examples from that schema until 3 in a row correct, then choose interleaved from all 3 schemas.
-3. Yoked Varied. Follow the same sequence of examples as in the yoking sequence.
-4. Yoked Shuffled. Randomize the sequence of examples in the yoking sequence and follow that.
-So really, only 2. requires real-time selection for each trial - the other 3 are determined in advance.
-*/
 function addTrainingExamples( exp_struct, mode, condVariation, condVersion, yokingSeq ) {
-    var num_questions       = 6;                        // testing only; eventually change to 18
+    var num_questions       = 18;
     switch ( condVariation ) {
         case "Nonvaried" :
             var schema      = TRAINING_SCHEMAS[ condVersion ];
@@ -622,7 +804,7 @@ function addConceptInduction( exp_struct, mode ) {
     // based on Exp 6 version, but modified to use language consistent with Exp 3 exposition
     var text = [
         "<p>Problems like the ones you just viewed always involve two numbers, and the answer is always <i>(one number)<sup>(the other number)</sup></i>. The first number, which is multiplied by itself many times, is called the <b>base</b>, and the second number, which determines how many times to multiply the first number, is called the <b>exponent</b>.</p><p>Please describe, in as general a way as possible, how to decide which number should be the base and which number should be the exponent.</p>",
-        "<p>One correct answer to the previous question is: \"If, for <strong>EACH</strong> of one thing called \"selections,\" <strong>ONE</strong> of another thing called \"alternatives\" is chosen, then the number of alternatives should be the base and the number of selections should be the exponent.</p><p>Please describe, in as general a way as possible, how to decide which thing is the alternatives and which thing is the selections.</p>"
+        "<p>One correct answer to the previous question is: \"If, for <strong>EACH</strong> of one thing called \"selections,\" <strong>ONE</strong> of another thing called \"options\" is chosen, then the number of options should be the base and the number of selections should be the exponent.</p><p>Please describe, in as general a way as possible, how to decide which thing is the options and which thing is the selections.</p>"
         ];
     
     var specs=[], data=[];
@@ -677,7 +859,7 @@ var selectTrainingQuestion = function( trial_idx, block_data ) {
     if ( this.condVariation=="Adaptive Varied" ) {
         if ( this.criterionIdx>0 ) {
             return this.questions[ (trial_idx-this.criterionIdx+1)%(this.questions.length) ][ trial_idx ];
-        } else if ( checkCriterion( block_data, 2 ) ) {     // testing only; change to 3 for the real thing
+        } else if ( checkCriterion( block_data, 3 ) ) {
             this.criterionIdx = trial_idx;
             return this.questions[ (trial_idx-this.criterionIdx+1)%(this.questions.length) ][ trial_idx ];
         } else {
@@ -699,7 +881,7 @@ function addIntro( exp_struct, mode ) {
           "text": "<p>The study is divided into 4 parts. Each part should take less than 15 minutes.</p><ul><li>In the 1st part, you'll see a quick review of exponential notation.</li><li>In the 2nd part, you'll do some math problems.</li><li>In the 3rd part, you'll read a lesson about how to solve the problems, and do some practice problems for which the solutions will be shown.</li><li>In the 4th part, you'll do some more problems without being shown the solutions.</li></ul><p>At the end of the study, you'll be asked a few easy questions about yourself.</p><p>Let's get started with the first part!</p>" },
         // 1 exponent lesson
         { "plugin": "text",
-          "text": "<p><i>Below is a brief review of 'Exponents'. Please read it carefully. Later, you will be asked some questions to test your recall, and you will not be able to return to this page.</i></p><h1>EXPONENTS</h1><p>Exponents are a convenient way to express 'multiply something by itself several times'.</p><p>Here is an example: <strong>2<sup>3</sup></strong>. This is read as 'two to the third power', and means 'two multiplied by itself three times', i.e. 2*2*2=8.</p><p><strong>2<sup>3</sup></strong> is different from <strong>3<sup>2</sup></strong>. The second expression is read as 'three to the second power', and means 'three multiplied by itself two times', i.e. 3*3=9.</p><table border='1'><tr><td>In general, if <i>m</i> and <i>n</i> are two numbers, then <strong><i>m<sup>n</n></sup></i></strong> means '<i>m</i> multiplied by itself <i>n</i> times.'</tr></td></table><p>The number which is multiplied by itself several times is called the <strong>base</strong> (i.e. the number on the lower left). The number of times by which that number is multiplied is called the <strong>exponent</strong> (i.e. the number on the upper right).</p>" },
+          "text": "<p><i>Below is a brief review of 'Exponents'. Please read it carefully. Later, you will be asked some questions to test your recall, and you will not be able to return to this page.</i></p><h1>EXPONENTS</h1><p>Exponents are a convenient way to express 'multiply something by itself several times'.</p><p>Here is an example: <strong>2<sup>3</sup></strong>. This is read as 'two to the third power', and means 'two multiplied by itself three times', i.e. 2\xD72\xD72=8.</p><p><strong>2<sup>3</sup></strong> is different from <strong>3<sup>2</sup></strong>. The second expression is read as 'three to the second power', and means 'three multiplied by itself two times', i.e. 3\xD73=9.</p><table border='1'><tr><td>In general, if <i>m</i> and <i>n</i> are two numbers, then <strong><i>m<sup>n</n></sup></i></strong> means '<i>m</i> multiplied by itself <i>n</i> times.'</tr></td></table><p>The number which is multiplied by itself several times is called the <strong>base</strong> (i.e. the number on the lower left). The number of times by which that number is multiplied is called the <strong>exponent</strong> (i.e. the number on the upper right).</p>" },
         // 2 catch trials
         { "plugin": "radio-multiple",
           "text": [
@@ -708,8 +890,8 @@ function addIntro( exp_struct, mode ) {
             "<p>Which of the following means the same as '5 multiplied by itself 8 times?'</p>",
             "<p>Which of the following means the same as '9 multiplied by itself 2 times'?</p>" ],
           "answers": [ 
-            [ "6 multiplied by itself 4 times, i.e. 6*6*6*6", "4 multiplied by itself 6 times, i.e. 4*4*4*4*4*4" ],
-            [ "7 multiplied by itself 3 times, i.e. 7*7*7", "3 multiplied by itself 7 times, i.e. 3*3*3*3*3*3*3" ],
+            [ "6 multiplied by itself 4 times, i.e. 6\xD76\xD76\xD76", "4 multiplied by itself 6 times, i.e. 4\xD74\xD74\xD74\xD74\xD74" ],
+            [ "7 multiplied by itself 3 times, i.e. 7\xD77\xD77", "3 multiplied by itself 7 times, i.e. 3\xD73\xD73\xD73\xD73\xD73\xD73" ],
             [ "5<sup>8</sup>", "8<sup>5</sup>" ],
             [ "9<sup>2</sup>", "2<sup>9</sup>" ] ],
           "key": [ 0, 1, 0, 0 ],
@@ -744,28 +926,24 @@ function addBackground( exp_struct, mode ) {
         // 3 comments
         { "plugin": "essay",
           "text": "Do you have any comments or suggestions for us about this study?" },
-        // 4 graphical
-        { "plugin": "radio",
-          "text": "Which of these statements best describes you?",
-          "answers": [ "I am much better at visual thinking than verbal thinking", "I am somewhat better at visual thinking than verbal thinking", "I am equally good at visual thinking and verbal thinking", "I am somewhat better at verbal thinking than visual thinking", "I am much better at verbal thinking than visual thinking" ] },
-        // 5 sex
+        // 4 sex
         { "plugin": "radio",
           "text": "Are you male or female?",
           "answers": [ "Male", "Female" ] },
-        // 6 age
+        // 5 age
         { "plugin": "radio",
           "text": "How old are you?",
           "answers": [ "Under 18", "18 to 21", "22 to 25", "26 to 30", "31 to 35", "36 to 40", "41 or over" ] },
-        // 7 education
+        // 6 education
         { "plugin": "radio", 
           "text": "What is the highest level of education you have completed?",
           "answers": [ "Below high school", "High school / GED", "Some college", "2-year college degree", "4-year college degree", "Master's degree", "Doctoral degree", "Professional degree (JD, MD, etc.)" ] },
-        // 8 SAT math
+        // 7 SAT math
         { "plugin": "number", 
           "text": "Which of the following is <strong>your highest score on the SAT MATH section</strong>? (If you have not taken the SAT, or do not remember your score on the MATH section, please choose one of the last two responses.)", 
           "minimum": 200, "maximum": 800,
           "answers": [ "Did not take the SAT", "Do not remember my score on the SAT MATH" ] },
-        // 9 ACT math
+        // 8 ACT math
         { "plugin": "number", 
           "text": "Which of the following is <strong>your highest score on the ACT MATH section</strong>? (If you have not taken the ACT, or do not remember your score on the MATH section, please choose one of the last two responses.)", 
           "minimum": 1, "maximum": 36, 

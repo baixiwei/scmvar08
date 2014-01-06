@@ -157,7 +157,8 @@ function getCompletedCond( $table, $numcond ) {
     $completed = array_fill( 0, $numcond, 0 );
     
     // query database to get actual number completed per condition
-    $query      = 'SELECT `condition`, COUNT(DISTINCT `subjid`) FROM '.mysql_real_escape_string($table).' WHERE `section`="Background" GROUP BY `condition`';
+    // $query      = 'SELECT `condition`, COUNT(DISTINCT `subjid`) FROM '.mysql_real_escape_string($table).' WHERE `section`="Background" GROUP BY `condition`';
+    $query      = 'SELECT `condition`, COUNT(DISTINCT `subjid`) FROM '.mysql_real_escape_string($table).' WHERE `end` is not null GROUP BY `condition`';
     $result     = mysql_query($query);
     while ( $row = mysql_fetch_array($result) ) {
         $completed[intval($row['condition'])] = intval($row['COUNT(DISTINCT `subjid`)']);
@@ -193,13 +194,13 @@ function getAssignedYoking( $table, $condition ) {
 
     // create list of subjids already completed in adaptive varied condition
     $assigned   = array();
-    $query      = 'SELECT DISTINCT `subjid` FROM '.mysql_real_escape_string($table).' WHERE (`condition`='.$ADAPTIVE_VARIED.')&&(`section`="Background")';
+    $query      = 'SELECT DISTINCT `subjid` FROM '.mysql_real_escape_string($table).' WHERE (`condition`='.$ADAPTIVE_VARIED.')&&(`end` is not null)';
     $result     = mysql_query($query);
     while( $row = mysql_fetch_array($result) ) {
         $assigned[ $row['subjid'] ] = 0;
     }
     
-    // find out how many times each subjid has already been used in the present (yoked) condition
+    // find out how many times each subjid has already been used (assigned) in the present (yoked) condition
     $query      = 'SELECT `yokingSubjid`, COUNT(DISTINCT `subjid`) FROM '.mysql_real_escape_string($table).' WHERE `condition`='.$condition.' GROUP BY `yokingSubjid`';
     $result     = mysql_query($query);
     while ( $row = mysql_fetch_array($result) ) {
@@ -226,18 +227,20 @@ function getYokingSequence( $table, $yoking_subjid ) {
 }
 
 // record assignments to database
-function recordAssignments( $table, $subjid, $condition, $subcondition, $yoking_subjid ) {
-    $query  = 'INSERT INTO '.mysql_real_escape_string($table).' (subjid,`condition`,`subcondition`,`yokingSubjid`) VALUES ("'.mysql_real_escape_string($subjid).'", '.mysql_real_escape_string($condition).', ' . mysql_real_escape_string($subcondition) . ', "' . mysql_real_escape_string($yoking_subjid) . '")';
+function recordAssignments( $table, $subjid, $condition, $subcondition, $yokingSubjid ) {
+    $query  = 'INSERT INTO '.mysql_real_escape_string($table).' (subjid,`condition`,`subcondition`,`yokingSubjid`) VALUES ("'.mysql_real_escape_string($subjid).'", '.mysql_real_escape_string($condition).', ' . mysql_real_escape_string($subcondition) . ', "' . mysql_real_escape_string($yokingSubjid) . '")';
     $result = mysql_query($query);
 }
 
-/*
+
 // testing
-$condition = 3;
+/*
+$condition = $YOKED_VARIED;
+$yokingSubjid   = assignYokingSubjid( $condition );
 print "<pre>";
-print_r( getYokingSequence( $table, 'NONTURK86044643' ) );
+print $yokingSubjid . "<br>";
+print_r( getYokingSequence( $table, $yokingSubjid ) );
 print "</pre>";
-//echo $yoking_subjid;
 */
 
 $condition      = assignCondition();
@@ -256,9 +259,10 @@ $result = array(
     'yokingSubjid'  => $yokingSubjid,
     'yokingSeq'     => $yokingSeq
     );
-    
+  
 echo json_encode( $result );
 
-recordAssignments( $table, $subjid, $condition, $subcondition, $yoking_subjid );
+recordAssignments( $table, $subjid, $condition, $subcondition, $yokingSubjid );
+
 
 ?>

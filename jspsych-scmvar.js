@@ -14,8 +14,8 @@ function answersToRadioOptions( answers, name, randomize, feedback ) {
     result += "<table id='" + name + "_wrapper' cellpadding=3 style='width: 100%; text-align: left; vertical-align: middle'>";
     for ( var i=0; i<answers.length; i++ ) {
         result += "<tr>";
-        result += "<td style='width: 3%'><input type='radio' name='" + name + "' value='" + answersIdxs[i] + "'></td>";
-        result += "<td style='width: 47%; height:38px'>" + answers[answersIdxs[i]] + "</td>";   
+        result += "<td style='width: 2%'><input type='radio' name='" + name + "' value='" + answersIdxs[i] + "'></td>";
+        result += "<td style='width: 48%; height:44px'>" + answers[answersIdxs[i]] + "</td>";   
         // sooo ugly! Setting the cell height in this way guarantees that adding the feedback text won't enlarge the table
         // It depends on knowing in advance the amount and size of the feedback text
         if ( i==0 ) {
@@ -31,10 +31,10 @@ function answersToRadioOptions( answers, name, randomize, feedback ) {
 //  creates the HTML for a row of stars indicating # complete out of # total,
 //  with width equal to that of the div with id target - 100
 function createProgressBar( complete, total ) {
-    var width   = $('#target').width()-150;
+    var width   = $('#target').width()-200;
     var height  = 20; 
     var padding = 3;
-    var content = "<table><tr><td style='vertical-align:middle; width: "+100+"px'>Your progress:  </td><td>";
+    var content = "<table><tr><td style='vertical-align:middle; width: "+150+"px'>Your progress:  </td><td>";
     content     += "<div style='background-color: gray; border-radius: "+((height/2)+padding)+"px; padding: "+padding+"px; width: "+width+"px'>";
     content     += "<div style='background-color: #00FF99; width: "+(Math.floor(100*complete/total))+"%; height: "+height+"px; border-radius: "+(height/2)+"px'>";
     // content     += "<div style='background-color: green; width: 40%; height: "+height+"px; border-radius: "+(height/2)+"px'>";
@@ -52,8 +52,8 @@ function alertBox( target, content, callback ) {
         "modal": true,
         "draggable": false,
         "resizable": false,
-        "width": 800, 
-        "height": 400,
+        "width": 1000, 
+        "height": 450,
         "buttons": [ { "text": "OK", "click": function() { $( this ).dialog( "close" ); } } ],
         "close": ((callback==undefined) ? function(){} : callback )
         } );
@@ -259,11 +259,13 @@ function alertBox( target, content, callback ) {
             var nextPage = function() {
                 // advanceTrial will end the trial
                 var advanceTrial = function() {
+                    trial_data.falsetries = falsetries;
                     block.data[block.trial_idx] = trial_data;
                     $this.html('');
                     $('#submit_button').unbind( 'click', nextPage );
                     setTimeout( function(){block.next();}, trial.timing );
                 }
+                /*
                 // remove any leftover feedback from a previous submission
                 if ( trial.feedback ) {
                     for ( var i=0; i<num_ques; i++ ) {
@@ -272,6 +274,7 @@ function alertBox( target, content, callback ) {
                         $('#radio_options_'+i+'_feedback').html( "" );
                     }
                 }
+                */
                 // get user input
                 responses   = new Array( num_ques );
                 accuracies  = new Array( num_ques );
@@ -290,15 +293,14 @@ function alertBox( target, content, callback ) {
                     }
                 } else {
                     if ( trial_data.mult_responses==undefined ) {
-                    // if this is the first time a valid response was submitted, record data
+                    // if this is the first time a valid response was submitted, record data (falsetries is added to data later)
                         console.log( "jsPsych.scmvar_test responses: " + responses.toString() + " with key " + key_list.toString() + ". accuracy: " + accuracies.toString() );
                         trial_data = $.extend( trial_data,
                             { "mult_responses": responses.toString(),
                               "mult_accuracies": accuracies.toString(),
                               "mult_accuracy_total": sum( accuracies ),
                               "accuracy": ( sum( accuracies ) / accuracies.length ),
-                              "rt": (new Date()).getTime()-start_time,
-                              "falsetries": falsetries } );
+                              "rt": (new Date()).getTime()-start_time } );
                     }
                     if ( (mode!="auto") && trial.feedback ) {
                     // if trial specifications require feedback, then give it
@@ -315,19 +317,20 @@ function alertBox( target, content, callback ) {
                                 }
                                 $('input[name="radio_options_'+i+'"]').attr( 'disabled', 'disabled' );
                             }
-                            // set submit button to regenerate trial and disable it
-                            var rewritePage = function() {
-                                setTimeout( writePage, 250 );
+                            // if this is the 1st-3rd error, make them do over, otherwise let go on
+                            if ( falsetries<=3 ) {
+                                // set submit button to rewrite page and disable it
+                                $('#submit_button').unbind( 'click', nextPage );
+                                $('#submit_button').click( function() { setTimeout( writePage, 250 ); } );
+                                $('#submit_button').html( 'Try again' );
+                                $('#submit_button').attr( 'disabled', 'disabled' );
+                                // show feedback and reactivate submit button once it is dismissed
+                                alertBox( $this, feedback.overall,
+                                    function() { setTimeout( function() { $('#submit_button').attr( 'disabled', false ); }, 5000 ); } );
+                            } else {
+                                // show feedback and advance trial once it is dismissed
+                                alertBox( $this, "<p><img src='images/small-red-x-mark-th.png' class='icon'>  There are still one or more incorrect answers. Let's try a different problem instead.</p>", advanceTrial );
                             }
-                            $('#submit_button').unbind( 'click', nextPage );
-                            $('#submit_button').click( rewritePage );
-                            $('#submit_button').html( 'Try again' );
-                            $('#submit_button').attr( 'disabled', 'disabled' );
-                            // deliver negative feedback and reactivate the submit button after a pause once it is dismissed
-                            var reactivateButton = function() {
-                                setTimeout( function() { $('#submit_button').attr( 'disabled', false ); }, 5000 );
-                            }
-                            alertBox( $this, feedback.overall, reactivateButton );
                         } else {
                             // otherwise deliver positive feedback and advance trial when it is dismissed
                             alertBox( $this, feedback.overall, advanceTrial );

@@ -29,45 +29,97 @@
 <script type="text/javascript">
 
 // global variables for controlling experiment settings, set below
-var override;   // whether default settings of other globals are overridden for testing purposes
 var offline;    // boolean, determines whether database & php scripts used at all
 var testing;    // boolean, determines which database is used and some other aspects of how exp runs
 var mode;       // forced, free, or auto
+var sections;   // indicates which experiment sections are to be included
+var sim_idx;    // index of current iteration (used only for simulation of multiple subjects)
 var subjid;     // subject's unique identification
 var table;      // name of MySQL table where data will be stored
-var sections;   // indicates which experiment sections are to be included
-var simulation; // whether or not we are simulating multiple subjects
-var idx = 0;    // index of current iteration (used only for simulation of multiple subjects)
-
-function setGlobalVars() {
-    override    = true;
-    if ( override ) {
-        offline = false;
-        testing = true;
-        mode    = "auto";
-        sections = [ "Intro", "Pretest", "Training", "Posttest", "Background" ];
-//        sections = [ "Training" ];
-        simulation = true;
-    } else {
-        offline = false;
-        testing = false;
-        mode    = "forced";
-        sections = [ "Intro", "Pretest", "Training", "Posttest", "Background" ];
-        simulation = false;
-    }
-    subjid      = "NONTURK" + Math.floor( Math.random()*1000000000 ) ;
-    table       = testing ? "scmvar_08_test" : "scmvar_08";
-    console.log( "index.html > setGlobalVars > override: " + override + "; offline: " + offline + "; testing: " + testing + "; mode: " + mode + "; subjid: " + subjid + "; table: " + table );
-}
 
 function showEntrancePage() {
-    setGlobalVars();
-    if ( simulation ) {
+    var proceed = function() {
+        subjid      = "NONTURK" + Math.floor( Math.random()*1000000000 ) ;
+        table       = testing ? "scmvar_08_test" : "scmvar_08";
+        console.log( "index.html > setGlobalVars > offline: " + offline + "; testing: " + testing + "; mode: " + mode + "; subjid: " + subjid + "; table: " + table );
         assignParameters();
-    } else { 
-        $('#target').html( entrance_nonturk );
-        $("#nextPageButton").click( assignParameters );
-        $("#nextPageButton").val( "Click Here to Start" );
+    }
+//    var run = ( gup('run')!=undefined ) ? gup('run') : 'normal';
+    var run = ( gup('run')!="" ) ? gup('run') : 'test';
+    switch ( run ) {
+        case 'normal' :     // default settings for live experiment
+            console.log( "index.html running live experiment." );
+            offline     = false;
+            testing     = false;
+            mode        = "forced";
+            sections    = [ "Intro", "Pretest", "Training", "Posttest", "Background" ];
+            $('#target').html( entrance_nonturk );
+            $("#nextPageButton").click( proceed );
+            $("#nextPageButton").val( "Click Here to Start" );
+            break;
+        case 'test' :       // default settings for testing
+            console.log( "index.html running experiment test." );
+            offline     = false;
+            testing     = true;
+            mode        = "free";
+            sections    = [ "Training" ];
+            $('#target').html( entrance_nonturk );
+            $("#nextPageButton").click( proceed );
+            $("#nextPageButton").val( "Click Here to Start" );
+            proceed();
+            break;
+        case 'dashboard' :  // let the user choose
+            console.log( "index.html displaying test dashboard." );
+            offline     = true;
+            testing     = true;
+            mode        = "free";
+            $('#target').html( '\
+                <p><button id="full_exp_nonvaried" type="button">Full experiment, Nonvaried condition</button></p>\
+                <p><button id="full_exp_adaptive"  type="button">Full experiment, Adaptive varied condition</button></p>\
+                <p><button id="training_nonvaried" type="button">Training only, Nonvaried condition</button></p>\
+                <p><button id="training_adaptive"  type="button">Training only, Adaptive varied condition</button></p>\
+                <p><button id="simul_participant"  type="button">Simulated participant</button></p>' );
+            $('#full_exp_nonvaried').click( function() {
+                sections    = [ "Intro", "Pretest", "Training", "Posttest", "Background" ];
+                subjid      = "NONTURK" + Math.floor( Math.random()*1000000000 ) ;
+                runExperiment( { "condition": 0, "subcondition": Math.floor( Math.random()*6 ), "yokingSubjid": "", "yokingSeq": "" } );
+                } );
+            $('#full_exp_adaptive').click( function() {
+                sections    = [ "Intro", "Pretest", "Training", "Posttest", "Background" ];
+                subjid      = "NONTURK" + Math.floor( Math.random()*1000000000 ) ;
+                runExperiment( { "condition": 1, "subcondition": Math.floor( Math.random()*6 ), "yokingSubjid": "", "yokingSeq": "" } );
+                } );
+            $('#training_nonvaried').click( function() {
+                sections    = [ "Training" ];
+                subjid      = "NONTURK" + Math.floor( Math.random()*1000000000 ) ;
+                runExperiment( { "condition": 0, "subcondition": Math.floor( Math.random()*6 ), "yokingSubjid": "", "yokingSeq": "" } );
+                } );
+            $('#training_adaptive').click( function() {
+                sections    = [ "Training" ];
+                subjid      = "NONTURK" + Math.floor( Math.random()*1000000000 ) ;
+                runExperiment( { "condition": 1, "subcondition": Math.floor( Math.random()*6 ), "yokingSubjid": "", "yokingSeq": "" } );
+                } );
+            $('#simul_participant').click( function() {
+                offline     = false;
+                testing     = true;
+                mode        = "auto";
+                sections    = [ "Intro", "Pretest", "Training", "Posttest", "Background" ];
+                proceed(); } );
+            break;
+        case 'simulation' : // run many simulated participants
+            if ( sim_idx==undefined ) {
+                sim_idx     = 0;
+            } else {
+                sim_idx++;
+                proceed();
+            }
+            console.log( "index.html running simulation, index=" + sim_idx + "." );
+            offline     = false;
+            testing     = true;
+            mode        = "auto";
+            sections    = [ "Intro", "Pretest", "Training", "Posttest", "Background" ];
+            proceed();
+            break;
     }
 }
 
@@ -187,16 +239,14 @@ function prependData( subjdata, expdata ) {
 }
 
 function showExitPage( data ) {
-    if ( simulation ) {
-        idx++;
-        if ( idx>=12 ) {
+    if ( sim_idx!=undefined ) {
+        if ( sim_idx<6 ) {
             $('#target').append( '<br>Done.')
-        } else { 
-            $('#target').append( '<br>'+idx );
+        } else {
             showEntrancePage();
         }
     } else {
-        if ( true ) {
+        if ( false ) {
             $('#target').html( data );
         } else {
             $('#target').html( exit_nonturk );
