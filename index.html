@@ -162,7 +162,7 @@ function assignParameters() {
 function runExperiment( parameters ) {
 
     // convert condition number into factor assignments
-    var condVariation   = [ 'Nonvaried', 'Adaptive Varied', 'Yoked Varied', 'Yoked Shuffled' ][ parameters.condition ];
+    var condVariation   = [ 'Nonvaried', 'Adaptive Varied', 'Yoked Varied', 'Yoked Interleaved' ][ parameters.condition ];
     var condVersion     = parameters.subcondition % 3;              // determines order in which schemas are used for training examples
     var condTestSeq     = Math.floor(parameters.subcondition/3);    // which test problem set is used as pretest and which as posttest
     var yokingSubjid    = parameters.yokingSubjid;                  // id of subject to whom this subject is yoked (yoked conditions only)

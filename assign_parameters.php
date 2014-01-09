@@ -9,7 +9,7 @@ $numcond            = 4;                // experimental conditions
 $NONVARIED          = 0;
 $ADAPTIVE_VARIED    = 1;
 $YOKED_VARIED       = 2;
-$YOKED_SHUFFLED     = 3;
+$YOKED_INTERLEAVED     = 3;
 $numsubcond         = 6;                // combinations of version & sequence variables
 
 
@@ -62,7 +62,7 @@ function weightedSelect( $weights ) {
 // assign selection weight to each condition
 function getWeightsCond() {
 
-    global $table, $numcond, $NONVARIED, $ADAPTIVE_VARIED, $YOKED_VARIED, $YOKED_SHUFFLED;
+    global $table, $numcond, $NONVARIED, $ADAPTIVE_VARIED, $YOKED_VARIED, $YOKED_INTERLEAVED;
 
     $assigned   = getAssignedCond( $table, $numcond );
     $completed  = getCompletedCond( $table, $numcond );
@@ -70,22 +70,22 @@ function getWeightsCond() {
     $weights    = array_fill( 0, $numcond, 0 );
     // yoked conditions may only be selected if they have been assigned fewer times than the number of completions in the adaptive varied condition,
     // and each may only be assigned if its current assignments are <= those of the other
-    if ( ( $assigned[ $YOKED_VARIED ] < $completed[ $ADAPTIVE_VARIED ] ) && ( $assigned[ $YOKED_VARIED ] <= $assigned[ $YOKED_SHUFFLED ] ) ) {
+    if ( ( $assigned[ $YOKED_VARIED ] < $completed[ $ADAPTIVE_VARIED ] ) && ( $assigned[ $YOKED_VARIED ] <= $assigned[ $YOKED_INTERLEAVED ] ) ) {
         $weights[ $YOKED_VARIED ] = 1;
     }
-    if ( ( $assigned[ $YOKED_SHUFFLED ] < $completed[ $ADAPTIVE_VARIED ] ) && ( $assigned[ $YOKED_SHUFFLED ] <= $assigned[ $YOKED_VARIED ] ) ) {
-        $weights[ $YOKED_SHUFFLED ] = 1;
+    if ( ( $assigned[ $YOKED_INTERLEAVED ] < $completed[ $ADAPTIVE_VARIED ] ) && ( $assigned[ $YOKED_INTERLEAVED ] <= $assigned[ $YOKED_VARIED ] ) ) {
+        $weights[ $YOKED_INTERLEAVED ] = 1;
     }
     // adaptive varied condition may only be selected if both yoked conditions are unassignable AND it has not been assigned more times than nonvaried
-    if ( ( $weights[ $YOKED_VARIED ]==0 ) && ( $weights[ $YOKED_SHUFFLED ]==0 ) && ( $assigned[ $ADAPTIVE_VARIED ]<=$assigned[ $NONVARIED ] ) ) {
+    if ( ( $weights[ $YOKED_VARIED ]==0 ) && ( $weights[ $YOKED_INTERLEAVED ]==0 ) && ( $assigned[ $ADAPTIVE_VARIED ]<=$assigned[ $NONVARIED ] ) ) {
         $weights[ $ADAPTIVE_VARIED ] = 1;
     }
     // nonvaried condition may only be selected if (1) both yoked conditions are unassignable AND it has not been assigned more times than adaptive varied, or (2) a yoked condition is assignable and it has been assigned fewer times than adaptive varied
-    if ( ( $weights[ $YOKED_VARIED ]==0 ) && ( $weights[ $YOKED_SHUFFLED ]==0 ) ) {
+    if ( ( $weights[ $YOKED_VARIED ]==0 ) && ( $weights[ $YOKED_INTERLEAVED ]==0 ) ) {
         if ( $assigned[ $NONVARIED ]<=$assigned[ $ADAPTIVE_VARIED ] ) {
             $weights[ $NONVARIED ] = 1;
         }
-    } else if ( ( $weights[ $YOKED_VARIED ]>0 ) || ( $weights[ $YOKED_SHUFFLED ]>0 ) ) {
+    } else if ( ( $weights[ $YOKED_VARIED ]>0 ) || ( $weights[ $YOKED_INTERLEAVED ]>0 ) ) {
         if ( $assigned[ $NONVARIED ]<$assigned[ $ADAPTIVE_VARIED ] ) {
             $weights[ $NONVARIED ] = 1;
         }
@@ -245,7 +245,7 @@ print "</pre>";
 
 $condition      = assignCondition();
 $subcondition   = assignSubcondition( $condition );
-if ( ( $condition==$YOKED_VARIED ) || ( $condition==$YOKED_SHUFFLED ) ) {
+if ( ( $condition==$YOKED_VARIED ) || ( $condition==$YOKED_INTERLEAVED ) ) {
     $yokingSubjid   = assignYokingSubjid( $condition );
     $yokingSeq      = getYokingSequence( $table, $yokingSubjid );
 } else {

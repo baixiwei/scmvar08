@@ -617,7 +617,7 @@ Experimental condition is determined by the condVariation variable, which can ta
 
 2 - Yoked varied condition. The sequence of training examples - and thus, of schemas - is exactly matched to that of a previous participant in the adaptive varied condition.
 
-3 - Yoked shuffled condition. The sequence of training examples is a random permutation of that of a previous participant in the adaptive varied condition.
+3 - Yoked interleaved condition. The sequence of training examples is a permutation of that of a previous participant that maximizes 'spread' of schemas across entire training sequence.
 
 Note that for conditions 0, 2, and 3, the sequence of examples is completely determined before the training begins, but in condition 1, it is determined dynamically depending on performance during training.
 */
@@ -792,7 +792,7 @@ function addTrainingExamples( exp_struct, mode, condVariation, condVersion, yoki
         case "Yoked Varied" :
             var questions   = getTrainingQuestionsByIds( yokingSeq );
             break;
-        case "Yoked Shuffled" :
+        case "Yoked Interleaved" :
             var questions   = shuffle( getTrainingQuestionsByIds( yokingSeq ) );
             break;
     }
