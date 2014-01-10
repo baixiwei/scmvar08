@@ -61,11 +61,8 @@ function showEntrancePage() {
             console.log( "index.html running experiment test." );
             offline     = false;
             testing     = true;
-            mode        = "free";
+            mode        = "auto";
             sections    = [ "Training" ];
-            $('#target').html( entrance_nonturk );
-            $("#nextPageButton").click( proceed );
-            $("#nextPageButton").val( "Click Here to Start" );
             proceed();
             break;
         case 'dashboard' :  // let the user choose

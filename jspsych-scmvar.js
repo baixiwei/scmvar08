@@ -122,7 +122,8 @@ function alertBox( target, content, callback ) {
                     var answer;
                     for ( i=0; i<num_ques; i++ ) {
                         answer = Math.floor( Math.random() * ans_list[i].length );
-                        $('input[name=radio_options_'+i+']:eq('+answer+')').attr('checked','checked');
+                        // $('input[name=radio_options_'+i+']:eq('+answer+')').attr('checked','checked');
+                        $('input[name=radio_options_'+i+'][value='+answer+']').attr('checked','checked');
                     }
                     $('#submit_button').click();
                 } else {
@@ -245,7 +246,8 @@ function alertBox( target, content, callback ) {
                     var answer;
                     for ( i=0; i<num_ques; i++ ) {
                         answer = key_list[i];
-                        $('input[name=radio_options_'+i+']:eq('+answer+')').attr('checked','checked');
+                        // $('input[name=radio_options_'+i+']:eq('+answer+')').attr('checked','checked');
+                        $('input[name=radio_options_'+i+'][value='+answer+']').attr('checked','checked');
                     }
                     $('#submit_button').click();
                 } else {
@@ -294,7 +296,7 @@ function alertBox( target, content, callback ) {
                 } else {
                     if ( trial_data.mult_responses==undefined ) {
                     // if this is the first time a valid response was submitted, record data (falsetries is added to data later)
-                        console.log( "jsPsych.scmvar_test responses: " + responses.toString() + " with key " + key_list.toString() + ". accuracy: " + accuracies.toString() );
+                        console.log( "jsPsych.scmvar_training responses: " + responses.toString() + " with key " + key_list.toString() + ". accuracy: " + accuracies.toString() );
                         trial_data = $.extend( trial_data,
                             { "mult_responses": responses.toString(),
                               "mult_accuracies": accuracies.toString(),
