@@ -225,7 +225,7 @@ function addTextBlock( exp_struct, mode, section, text_list ) {
                     if ( ( trial.mode == "forced" ) && ( incomplete.length>0 ) ) {
                         alert( "Please answer all the questions before proceeding." );
                         // falsetries++;
-                    } else if ( ( trial.mode == "forced" ) && ( incorrect.length>0 ) ) {
+                    } else if ( ((trial.mode=="forced")||(trial.mode=="free")) && (incomplete.length==0) && (incorrect.length>0) ) {
                         alert( trial.feedback[incorrect[0]] );
                         falsetries++;
                     } else {
