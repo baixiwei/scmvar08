@@ -189,70 +189,70 @@ var instantiateQuestion = function( section, number ) {
 function getTestQuestionsBySet() {
     var test_question_sets = [
         [
-            new Question( "OAPlc", 21, "colors", "rooms", "color", "room",
+            new Question( 21, "OAPlc", "colors", "rooms", "color", "room",
             // long version
             // original:
             // "<p>A homeowner is going to repaint several rooms in her house. She chooses one color of paint for each of the rooms. (It is possible for multiple rooms to be painted the same color.)</p><p>In how many different ways can she paint the rooms, if there are {0} {1} and {2} {3}?</p>", 
             "<p>A homeowner is going to repaint several rooms in her house. She chooses one color of paint for the living room, one for the dining room, one for the family room, and so on. (It is possible for multiple rooms to be painted the same color.)</p><p>In how many different ways can she paint the rooms, if there are {0} {1} and {2} {3}?</p>", 
             // short version
             "<p>Now suppose there are {0} {1} and {2} {3}. In how many different ways can she paint the rooms now?</p>" ),
-            new Question( "CAE", 22, "categories", "paranormal events", "category", "event",
+            new Question( 22, "CAE", "categories", "paranormal events", "category", "event",
             // long version
             "<p>An FBI agent is investigating several paranormal events. She must write a report classifying each event into a category such as Possession, Haunting, Werewolf, and so on.</p><p>In how many different ways can she write her report, if there are {0} {1} and {2} {3}?</p>", 
             // short version
             "<p>Now suppose there are {0} {1} and {2} {3}. In how many different ways can she write her report now?</p>" ),
-            new Question( "OAPpl", 23, "employees", "prizes", "employee", "prize",
+            new Question( 23, "OAPpl", "employees", "prizes", "employee", "prize",
             // long version
             "<p>A prize drawing is held at a small office party, and each of several prizes is awarded to one of the employees. (It is possible for multiple prizes to be awarded to the same employee.)</p><p>In how many different ways can the prizes be awarded, if there are {0} {1} and {2} {3}?</p>", 
             // short version
             "<p>Now suppose there are {0} {1} and {2} {3}. In how many different ways can the prizes be awarded now?</p>" ),
-            new Question( "PCO", 24, "fishing spots", "fishermen", "spot", "fisherman",
+            new Question( 24, "PCO", "fishing spots", "fishermen", "spot", "fisherman",
             // long version
             "<p>Several fishermen go fishing in the same lake, and each of them chooses one of several spots at which to fish. (It is possible for more than one fisherman to choose the same spot.)</p><p>In how many different ways can the fishermen choose their spots, if there are {0} {1} and {2} {3}?</p>", 
             // short version
             "<p>Now suppose there are {0} {1} and {2} {3}. In how many different ways can the fishermen choose their spots now?</p>" ),
-            new Question( "OSS", 25, "types of wine", "courses in the meal", "type of wine", "course",
+            new Question( 25, "OSS", "types of wine", "courses in the meal", "type of wine", "course",
             // long version
             "<p>A gourmet chef is preparing a fancy several-course meal. There are several types of wine available, and the chef needs to choose one wine to serve with each course. (It is possible for the same wine to be served with more than one course.)</p><p>In how many different ways can the wines be chosen, if there are {0} {1} and {2} {3}?</p>", 
             // short version
             "<p>Now suppose there are {0} {1} and {2} {3}. In how many different ways can the wines be chosen now?</p>" ),
             // this next question was added from exp 4, i.e. it was not included in exps 3 or 5
-            new Question( "OAPpl", 26, "sons", "houses", "son", "house",
+            new Question( 26, "OAPpl", "sons", "houses", "son", "house",
             // long version
             "<p>A wealthy old woman is writing her will. She owns several houses, and wishes to leave each house to one of her sons. (It is possible for her to leave more than one house to the same son.)</p><p>In how many different ways can she write this part of her will, if there are {0} {1} and {2} {3}?</p>",
             // short version
             "<p>Now suppose there are {0} {1} and {2} {3}. In how many different ways can the old woman write her will now?</p>" )
         ],
         [
-            new Question( "OAPlc", 27, "crops", "fields", "crop", "field",
+            new Question( 27, "OAPlc", "crops", "fields", "crop", "field",
             // long version
             "<p>A farmer is planning what crops he will plant this year. He chooses one crop for each of several fields. (It is possible for multiple fields to receive the same crop.)</p><p>In how many different ways can the farmer plant his crops, if there are {0} {1} and {2} {3}?</p>", 
             // short version
             "<p>Now suppose there are {0} {1} and {2} {3}. In how many different ways can he plant his crops now?</p>" ),
-            new Question( "CAE", 28, "categories", "weather events", "category", "event", 
+            new Question( 28, "CAE", "categories", "weather events", "category", "event", 
             // long version
             "<p>A meteorologist must write a report classifying each extreme weather event which occurred in the past year into a category such as Hurricane, Tropical Storm, etc.</p><p>In how many different ways can he write his report, if there are {0} {1} and {2} {3}?</p>", 
             // short version
             "<p>Now suppose there are {0} {1} and {2} {3}. In how many different ways can he write his report now?</p>" ),
             // as in Exp 5, changed "districts" to "provinces" in order to avoid linguistic overlap with the city districts/public works training problem
-            new Question( "OAPpl", 29, "children", "provinces", "child", "province",
+            new Question( 29, "OAPpl", "children", "provinces", "child", "province",
             // long version
             "<p>An aging king plans to divide his lands among his heirs. Each province of the kingdom will be assigned to one of his many children. (It is possible for multiple provinces to be assigned to the same child.)</p><p>In how many different ways can the provinces be assigned, if there are {0} {1} and {2} {3}?</p>", 
             // short version
             "<p>Now suppose there are {0} {1} and {2} {3}. In how many different ways can the provinces be assigned now?</p>" ),
-            new Question( "PCO", 30, "treatments", "doctors", "treatment", "doctor",
+            new Question( 30, "PCO", "treatments", "doctors", "treatment", "doctor",
             // long version
             "<p>There are several possible treatments for a certain rare disease. A patient with this disease consults several doctors, and each doctor recommends one of the possible treatments. (It is possible for more than one doctor to recommend the same treatment.)</p><p>In how many different ways can the doctors make their recommendations, if there are {0} {1} and {2} {3}?</p>", 
             // short version
             "<p>Now suppose there are {0} {1} and {2} {3}. In how many different ways can the doctors make their recommendations now?</p>" ),
             // next question originally said "daughters" instead of "dates" in exp 3 - same change made in Exp 5
-            new Question( "OSS", 31, "colognes to choose from", "dates", "cologne", "date", 
+            new Question( 31, "OSS", "colognes to choose from", "dates", "cologne", "date", 
             // long version
             "<p>Don Juan has one date with each of a merchant's daughters. For each date, he puts on a cologne he thinks that daughter will like. (It is possible for him to choose the same cologne for more than one date.)</p><p>In how many different ways can he choose colognes for his dates, if there are {0} {1} and {2} {3}?</p>", 
             // short version
             "<p>Now suppose there are {0} {1} and {2} {3}. In how many different ways can he choose colognes for his dates now?</p>" ),
             // this next question was added from exp 4, i.e. it was not included in exps 3 or 5
-            new Question( "OAPpl", 32, "detectives", "cases", "detective", "case", 
+            new Question( 32, "OAPpl", "detectives", "cases", "detective", "case", 
             // long version
             "<p>A police department receives several new cases in one day. Each new case is assigned to one of the detectives. (It is possible for multiple cases to be assigned to the same detective.)</p><p>In how many different ways can the cases be assigned, if there are {0} {1} and {2} {3}?</p>",
             // short version
