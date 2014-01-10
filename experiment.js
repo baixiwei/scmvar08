@@ -783,7 +783,7 @@ function addTrainingExposition( exp_struct, mode, condVariation, condVersion ) {
 }
 
 function addTrainingExamples( exp_struct, mode, condVariation, condVersion, yokingSeq ) {
-    var num_questions       = 18;
+    var num_questions       = 15;
     switch ( condVariation ) {
         case "Nonvaried" :
             var schema      = TRAINING_SCHEMAS[ condVersion ];
@@ -989,7 +989,7 @@ var selectTrainingQuestion = function( trial_idx, block_data ) {
     if ( this.condVariation=="Adaptive Varied" ) {
         if ( this.criterionIdx>0 ) {
             return this.questions[ (trial_idx-this.criterionIdx+1)%(this.questions.length) ][ trial_idx ];
-        } else if ( checkCriterion( block_data, 3 ) ) {
+        } else if ( checkCriterion( block_data, 2 ) ) {
             this.criterionIdx = trial_idx;
             return this.questions[ (trial_idx-this.criterionIdx+1)%(this.questions.length) ][ trial_idx ];
         } else {
