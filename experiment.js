@@ -142,8 +142,13 @@ var instantiateQuestion = function( section, number ) {
             answers     = [ "For <strong>EACH</strong> of the " + question.exp_noun + ", <strong>ONE</strong> of the " + question.base_noun + " is chosen",
                             "For <strong>EACH</strong> of the " + question.base_noun + ", <strong>ONE</strong> of the " + question.exp_noun + " is chosen" ];
             key         = 0;
+        } else if ( type=="role prompt" ) {
+            ques_text   = "<p>Next, which thing in the problem plays the role of 'options' and which plays the role of 'selection events'?</p>";
+            answers     = [ "The " + question.base_noun + " are the 'options', and the " + question.exp_noun + " are the 'selection events.'",
+                            "The " + question.exp_noun + " are the 'options', and the " + question.base_noun + " are the 'selection events.'" ];
+            key         = 0;
         } else if ( type=="final long" ) {
-            ques_text   = "<p>Next, what is the answer to the problem?</p>";
+            ques_text   = "<p>Finally, what is the answer to the problem?</p>";
             answers     = [ createAnswer( base_num, exp_num ), createAnswer( exp_num, base_num ) ];
             key         = 0;
         }
@@ -159,10 +164,10 @@ var instantiateQuestion = function( section, number ) {
             key_list.push( key );
         }
     } else if ( section=="Training" ) {
-        // create three questions: relational prompt and final answer prompt for long version, then short version
-        for ( var i=0; i<3; i++ ) {
-            if ( ( i==0 ) || ( i==2 ) ) { randomize(); }
-            set_text_and_answers( [ "relational prompt", "final long", "short version" ][ i ] );
+        // create four questions: relational and role prompts and final answer prompt for long version, then short version without relational prompts
+        for ( var i=0; i<4; i++ ) {
+            if ( ( i==0 ) || ( i==3 ) ) { randomize(); }
+            set_text_and_answers( [ "relational prompt", "role prompt", "final long", "short version" ][ i ] );
             text_list.push( ques_text );
             ans_list.push( answers );
             key_list.push( key );
@@ -554,17 +559,19 @@ var generateTrainingFeedback = function( accuracies, mode ) {
         feedback.overall    = "<p><img src='images/small-green-check-mark-th.png' class='icon'>  Great job! All of your answers are correct. Click 'OK' to continue.</p>";
         feedback.delay      = { "auto": 0, "free": 500, "forced": 7500 }[ mode ];
     } else {
-        if ( 3-sum(accuracies) == 1 ) {
+        if ( sum(accuracies.map(function(x){return(1-x);})) == 1 ) {
             feedback.overall    = "<p><img src='images/small-red-x-mark-th.png' class='icon'>  Sorry, one of your answers is incorrect.</p><p>The incorrect answer has been highlighted, and an explanation of why it is incorrect is displayed to the right. After reading the explanation, click 'Try again,' and the page will be reloaded with different numbers and the order of answers randomized.</p><p>The 'Try again' button will activate after a delay so that you have time to read the explanation.</p>";
         } else {
             feedback.overall    = "<p><img src='images/small-red-x-mark-th.png' class='icon'>  Sorry, some of your answers are incorrect.</p><p>The incorrect answers have been highlighted, and explanations of why they are incorrect are displayed to the right. Please read the explanations, click 'Try again,' and the page will be reloaded with different numbers and the order of answers randomized.</p><p>The 'Try again' button will activate after a delay so that you have time to read the explanations.</p>";
         }
         for ( var i=0; i<accuracies.length; i++ ) {
             if ( accuracies[i]==0 ) {
-                if ( i==0 ) {   // relational prompt
+                if ( i==0 ) {           // relational prompt
                     feedback.by_question[i] = this.explanation;
-                } else {        // final answers
-                    feedback.by_question[i] = "Because <strong>ONE</strong> of the " + this.base_noun + " is chosen for <strong>EACH</strong> of the " + this.exp_noun + ",<br>the answer should be <i><b>(number of " + this.base_noun + ") <sup>(number of " + this.exp_noun + ")</sup></b></i>.";
+                } else if ( i==1 ) {    // role prompt
+                    feedback.by_question[i] = "Because <strong>ONE</strong> of the " + this.base_noun + " is chosen for <strong>EACH</strong> of the " + this.exp_noun + ",<br>the " + this.base_noun + " are the 'options' and the " + this.exp_noun + " are the 'selection events.'"
+                } else {                // final answers
+                    feedback.by_question[i] = "Because the " + this.base_noun + " are the 'options' and the " + this.exp_noun + " are the 'selection events,'<br>the answer should be <i><b>(number of " + this.base_noun + ") <sup>(number of " + this.exp_noun + ")</sup></b></i>.";
                 }
             }
         }
