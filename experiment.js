@@ -143,9 +143,9 @@ var instantiateQuestion = function( section, number ) {
                             "For <strong>EACH</strong> of the " + question.base_noun + ", <strong>ONE</strong> of the " + question.exp_noun + " is chosen" ];
             key         = 0;
         } else if ( type=="role prompt" ) {
-            ques_text   = "<p>Next, which thing in the problem plays the role of 'options' and which plays the role of 'selection events'?</p>";
-            answers     = [ "The " + question.base_noun + " are the 'options', and the " + question.exp_noun + " are the 'selection events.'",
-                            "The " + question.exp_noun + " are the 'options', and the " + question.base_noun + " are the 'selection events.'" ];
+            ques_text   = "<p>Next, which thing in the problem plays the role of 'selection events' and which plays the role of 'options'?</p>";
+            answers     = [ "The " + question.exp_noun + " are the 'selection events,' and the " + question.base_noun + " are the 'options.'",
+                            "The " + question.base_noun + " are the 'selection events,' and the " + question.exp_noun + " are the 'options.'" ];
             key         = 0;
         } else if ( type=="final long" ) {
             ques_text   = "<p>Finally, what is the answer to the problem?</p>";
@@ -710,13 +710,13 @@ function addTrainingExposition( exp_struct, mode, condVariation, condVersion ) {
                 }[ expositionSchema ];
             result  += "</div>";
         } else if ( contentType=="Generalization" ) {
-            result += "<p>To generalize, Sampling with Replacement problems always involve a situation where, for <strong>EACH</strong> of one thing called \"selection events,\" <strong>ONE</strong> of another thing called \"options\" is chosen. Once you figure out which thing is which, getting the answer is easy. The number of possible outcomes is just the number of options multiplied by itself as many times as the number of selection events. In other words,</p><div class='box'><p>If, for <strong>EACH</strong> of one thing called \"selection events,\" <strong>ONE</strong> of another thing called \"options\" is chosen,<br>then the number of possible outcomes is <b><i>(options)<sup>(selection events)</sup></i></b>.</p></div>";
+            result += "<p>To generalize, Sampling with Replacement problems always involve a situation where, for <strong>EACH</strong> of several \"selection events,\" <strong>ONE</strong> of several \"options\" is chosen. Once you figure out which thing is which, getting the answer is easy. The number of possible outcomes is just the number of options multiplied by itself as many times as the number of selection events. In other words,</p><div class='box'><p>If, for <strong>EACH</strong> \"selection event,\" <strong>ONE</strong> \"option\" is chosen,<br>then the number of possible outcomes is <b><i>(options)<sup>(selection events)</sup></i></b>.</p></div>";
             result += {
-                "PCO": "<p>In each of the golf examples, for <strong>EACH</strong> of the golfers, <strong>ONE</strong> of the golf clubs was chosen. So the answer was <span style='white-space:nowrap'><b><i>(number of Clubs)<sup>(number of Golfers)</sup></i></b>.</span></p>",
-                "OSS": "<p>In each of the card drawing examples, for <strong>EACH</strong> of the draws, <strong>ONE</strong> of the cards was chosen. So the answer was <span style='white-space:nowrap'><b><i>(number of Cards)<sup>(number of Draws)</sup></i></b>.</span></p>",
-                "TFR": "<p>In each of the swimsuit examples, for <strong>EACH</strong> of the swimming styles, <strong>ONE</strong> of the swimsuits was chosen. So the answer was <span style='white-space:nowrap'><b><i>(number of Swimsuits)<sup>(number of Swimming Styles)</sup></i></b>.</span></p>"
+                "PCO": "<p>In each of the golf examples, for <strong>EACH</strong> of the golfers, <strong>ONE</strong> of the golf clubs was chosen. So the golfers were the selection events and the golf clubs were the options. Therefore, the answer was <span style='white-space:nowrap'><b><i>(clubs)<sup>(golfers)</sup></i></b>.</span></p>",
+                "OSS": "<p>In each of the card drawing examples, for <strong>EACH</strong> of the draws, <strong>ONE</strong> of the cards was chosen. So the draws were the selection events and the cards were the options. Therefore, the answer was <span style='white-space:nowrap'><b><i>(cards)<sup>(draws)</sup></i></b>.</span></p>",
+                "TFR": "<p>In each of the swimsuit examples, for <strong>EACH</strong> of the swimming styles, <strong>ONE</strong> of the swimsuits was chosen. So the swimming styles were the selection events and the swimsuits were the options. Therefore, the answer was <span style='white-space:nowrap'><b><i>(swimsuits)<sup>(swimming Styles)</sup></i></b>.</span></p>"
                 }[ expositionSchema ];
-            result += "<p>So, to solve these problems, you just need to figure out what are the options and the selection events in this sentence: \"For <strong>EACH</strong> of the _____ (selection events), <strong>ONE</strong> of the ______ (options) is chosen.\" Then the answer is just <span style='white-space:nowrap'><b><i>(number of Options)<sup>(number of Selection Events)</sup></i></b>.</span></p>";
+            result += "<p>So, to solve these problems, you just need to figure out what are the options and the selection events in this sentence: \"For <strong>EACH</strong> of the _____ (selection events), <strong>ONE</strong> of the ______ (options) is chosen.\" Then the answer is just <span style='white-space:nowrap'><b><i>(options)<sup>(selection events)</sup></i></b>.</span></p>";
         }
         return result;
     }
