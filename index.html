@@ -37,12 +37,26 @@ var sim_idx;    // index of current iteration (used only for simulation of multi
 var subjid;     // subject's unique identification
 var table;      // name of MySQL table where data will be stored
 
+// experimental factors that will eventually get assigned
+var condition;          // number that determines condVariation below
+var subcondition;       // number that determines condVersion below
+var condTestSeq;        // number in {0,1}, determines which test set is used as pretest and which as posttest
+var condVariation;      // training condition, one of Nonvaried, Adaptive Varied, Yoked Varied, or Yoked Interleaved
+var condVersion;        // number in {0,1,2}, determines which schema is used to begin training
+var yokingSubjid;       // id of subject to whom this subject is yoked (yoked conditions only)
+var yokingSeq;          // sequence of question IDs for training (yoked conditions only)
+
+// other data that will get accessed at multiple points during the experiment
+var trial_data = [];    // data recorded by jspsych during experiment trials
+var pretest_accuracy;   // % correct on pretest
+var start_time;         // when the experiment started
+
 function showEntrancePage() {
     var proceed = function() {
         subjid      = "NONTURK" + Math.floor( Math.random()*1000000000 ) ;
         table       = testing ? "scmvar_08_test" : "scmvar_08";
         console.log( "index.html > setGlobalVars > offline: " + offline + "; testing: " + testing + "; mode: " + mode + "; subjid: " + subjid + "; table: " + table );
-        assignParameters();
+        runExperimentPart1();
     }
 //    var run = ( gup('run')!=undefined ) ? gup('run') : 'normal';
     var run = ( gup('run')!="" ) ? gup('run') : 'test';
@@ -59,10 +73,11 @@ function showEntrancePage() {
             break;
         case 'test' :       // default settings for testing
             console.log( "index.html running experiment test." );
-            offline     = false;
+            offline     = true;
             testing     = true;
-            mode        = "free";
-            sections    = [ "Training" ];
+            mode        = "auto";
+//            sections    = [ "Training" ];
+            sections    = [ "Intro", "Pretest", "Training", "Posttest", "Background" ];
             proceed();
             break;
         case 'dashboard' :  // let the user choose
@@ -120,80 +135,119 @@ function showEntrancePage() {
     }
 }
 
+// introduction and pretest
+function runExperimentPart1() {
+
+    // assign testseq right away, purely random selection
+    condTestSeq     = Math.floor( Math.random()*2 );
+
+    // create experiment structure for part 1
+    var exp_struct  = makeExpStructPart1( condTestSeq, sections, mode );
+    console.log( "index.html > runExperimentPart1 > exp_struct length " + exp_struct.length );
+
+    // record start time
+    start_time      = new Date();
+    console.log( "index.html > runExperimentPart1 > starting experiment at " + start_time.toString() );
+
+    // run part 1, followed by parameter assignment & part 2
+    jsPsych.init( $('#target'), {
+        "experiment_structure": exp_struct,
+        "plugins": [
+            {"type": "survey", "src": "jspsych-survey.js"},
+            {"type": "scmvar_test", "src": "jspsych-scmvar.js"},
+            {"type": "scmvar_training", "src": "jspsych-scmvar.js"}
+        ],
+        "finish": function( data ) {
+            // add part 1 data to trial_data
+            trial_data = trial_data.concat( data );
+            // calculate pretest accuracy, then go to parameter assignment & part 2
+            if ( offline || sections.indexOf('Pretest')==-1 ) {
+                var pretest_score = Math.floor(Math.random()*12);
+                var pretest_num_trials = 12;
+                pretest_accuracy = pretest_score / pretest_num_trials;
+                assignParameters();
+            } else {
+                var pretest_score = 0, pretest_num_trials = 0;
+                for ( var block_idx=0; block_idx<trial_data.length; block_idx++ ) {
+                    for ( var trial_idx=0; trial_idx<trial_data[block_idx].length; trial_idx++ ) {
+                        if ( trial_data[block_idx][trial_idx].section=="Pretest" ) {
+                            pretest_score += trial_data[block_idx][trial_idx].accuracy;
+                            pretest_num_trials += 1;
+                        }
+                    }
+                }
+                pretest_accuracy = pretest_score / pretest_num_trials;
+                assignParameters();
+            }
+        } } ) ;
+}
+
+// parameter assignment
 function assignParameters() {
-    var numcond=4, numsubcond=6;
-    var condition, subcondition, yokingSubjid, yokingSeq;
-    var proceed = function( parameters ) {
-        console.log( "index.html > assignParameters assigned condition: " + parameters.condition + "; subcondition: " + parameters.subcondition + "; yokingSubjid: " + parameters.yokingSubjid + "; " + parameters.yokingSeq.toString() );
-        runExperiment( parameters );
+    function randomAssignment() {
+        condition       = Math.floor( Math.random()*2 );    // yoking is not possible offline so only non-yoked conditions are considered
+        subcondition    = Math.floor( Math.random()*2 );    // determine subcondition purely randomly
+        condVariation   = [ 'Nonvaried', 'Adaptive Varied', 'Yoked Varied', 'Yoked Interleaved' ][ condition ];
+        condVersion     = subcondition;
+        yokingSubjid    = null;
+        yokingSeq       = [];        
     }
     if ( offline ) {
         console.log( "index.html > assignParameters running offline, using random assignment with restricted conditions." );
-        do { // yoking is not possible offline so must choose a non-yoked condition
-            condition       = Math.floor( Math.random() * numcond );
-        } while ( ( condition==2 ) || ( condition==3 ) );
-        subcondition    = Math.floor( Math.random() * numsubcond );
-        yokingSubjid    = null;
-        yokingSeq       = [];
-        proceed( { 'condition': condition, 'subcondition': subcondition, 'yokingSubjid': yokingSubjid, 'yokingSeq': yokingSeq } );
+        randomAssignment();
+        runExperimentPart2();
     } else {
+        console.log( "index.html > assignParameters running online." );
         $.ajax({ type: 'post', cache: false, url: 'assign_parameters.php',
             data: { 'table': table, 'subjid': subjid },
             success: function(data) {
                 console.log( "index.html > assignParameters > php script succeeded. output follows: " + data );
-                proceed( $.parseJSON( data ) );
+                var parameters  = $.parseJSON( data );
+                condition       = parameters.condition;
+                subcondition    = parameters.subcondition;
+                condVariation   = [ 'Nonvaried', 'Adaptive Varied', 'Yoked Varied', 'Yoked Interleaved' ][ condition ];
+                condVersion     = subcondition;
+                yokingSubjid    = parameters.yokingSubjid;
+                yokingSeq       = parameters.yokingSeq;
             },
             error: function(data) {
                 console.log( "index.html > assignParameters > php script failed, using random assignment with restricted conditions." );
-                do { // yoking is not possible without database connection so must choose a non-yoked condition
-                    condition       = Math.floor( Math.random() * numcond );
-                } while ( ( condition==2 ) || ( condition==3 ) );
-                subcondition    = Math.floor( Math.random() * numsubcond );
-                yokingSubjid    = null;
-                yokingSeq       = [];
-                proceed( { 'condition': condition, 'subcondition': subcondition, 'yokingSubjid': yokingSubjid, 'yokingSeq': yokingSeq } );
+                randomAssignment();
+                runExperimentPart2();
             }});
     }
 }
 
-function runExperiment( parameters ) {
+function runExperimentPart2() {
 
-    // convert condition number into factor assignments
-    var condVariation   = [ 'Nonvaried', 'Adaptive Varied', 'Yoked Varied', 'Yoked Interleaved' ][ parameters.condition ];
-    var condVersion     = parameters.subcondition % 3;              // determines order in which schemas are used for training examples
-    var condTestSeq     = Math.floor(parameters.subcondition/3);    // which test problem set is used as pretest and which as posttest
-    var yokingSubjid    = parameters.yokingSubjid;                  // id of subject to whom this subject is yoked (yoked conditions only)
-    var yokingSeq       = parameters.yokingSeq;                     // sequence of question IDs for training (yoked conditions only)
-    console.log( "index.html > runExperiment > factors assigned. condVariation: " + condVariation + "; condVersion: " + condVersion + "; condTestSeq: " + condTestSeq + "; yokingSeq: " + yokingSeq );
-    
-    // create experiment structure
-    var exp_struct  = makeExpStruct( condVariation, condVersion, condTestSeq, yokingSeq, sections, mode );
-    console.log( "index.html > runExperiment > exp_struct length " + exp_struct.length );
-    
-    // record start time
-    var start_time          = new Date();
-    var start_time_txt      = start_time.toString();
-    console.log( "index.html > runExperiment > starting experiment at " + start_time_txt );
+    console.log( "index.html > runExperimentPart2 starting. condVariation: " + condVariation + "; condVersion: " + condVersion + "; yokingSeq: " + yokingSeq );
 
-    // run the experiment
-    jsPsych.init($('#target'), {
+    // create experiment structure for part 2
+    var exp_struct  = makeExpStructPart2( condVariation, condVersion, yokingSeq, sections, mode );
+    console.log( "index.html > runExperiment > runExperimentPart2 > exp_struct length " + exp_struct.length );
+
+    // run part 2, then save data and end the experiment
+    jsPsych.init( $('#target'), {
         "experiment_structure": exp_struct,
-		"plugins": [ // TBD
-			{"type": "survey", "src": "jspsych-survey.js"},
+        "plugins": [
+            {"type": "survey", "src": "jspsych-survey.js"},
             {"type": "scmvar_test", "src": "jspsych-scmvar.js"},
             {"type": "scmvar_training", "src": "jspsych-scmvar.js"}
-		],
+        ],
         "finish": function( data ) {
-            // record end time
+            // add new data to trial data
+            trial_data = trial_data.concat( data );
+            // prepend subject data to all trial data
             var end_time        = new Date();
-            var end_time_txt    = end_time.toString();
-            var total_time_min  = (( end_time.getTime() - start_time.getTime() ) / ( 60 * 1000 )).toFixed(2);
+            var total_time_min  = Number((( end_time.getTime() - start_time.getTime() ) / ( 60 * 1000 )).toFixed(2));
             var subj_data       = { "subjid": subjid, "testing": testing.toString(), "mode": mode,
-                                    "condition": parameters.condition, "subcondition": parameters.subcondition,
+                                    "condition": condition, "subcondition": subcondition,
                                     "condVariation": condVariation, "condVersion": condVersion, "condTestSeq": condTestSeq,
                                     "yokingSubjid": yokingSubjid, "yokingSeq": yokingSeq.toString(),
-                                    "start": start_time_txt, "end": end_time_txt, "time": Number(total_time_min) };
-            var final_data      = prependData( subj_data, data );
+                                    "pretest_accuracy": pretest_accuracy,
+                                    "start": start_time.toString(), "end": end_time.toString(), "time": total_time_min };
+            var final_data      = prependData( subj_data, trial_data );
+            // save final data to database and finish
             console.log( "index.html > runExperiment jsPsych run complete. final data follows." );
             console.log( JSON.stringify(final_data) );
             if ( offline ) {
@@ -216,8 +270,8 @@ function runExperiment( parameters ) {
                           }
                         } );
             }
+            
         } } ) ;
-
 }
 
 function prependData( subjdata, expdata ) {
@@ -243,7 +297,7 @@ function showExitPage( data ) {
             showEntrancePage();
         }
     } else {
-        if ( false ) {
+        if ( true ) {
             $('#target').html( data );
         } else {
             $('#target').html( exit_nonturk );

@@ -15,7 +15,7 @@ var TRAINING_SCHEMAS    = [ "PCO", "OSS", "TFR" ];
 // makeExpStruct
 //////////////////////////////////
 
-function makeExpStruct( condVariation, condVersion, condTestSeq, yokingSeq, sections, mode ) {
+function makeExpStructPart1( condTestSeq, sections, mode ) {
 
     // generate test stimuli according to experimental condition
     // these are generated in advance because the randomization decisions made are shared across sections
@@ -25,6 +25,20 @@ function makeExpStruct( condVariation, condVersion, condTestSeq, yokingSeq, sect
     var exp_struct = [];
     if ( sections.indexOf( "Intro" ) != -1 )    { addIntro( exp_struct, mode ); }
     if ( sections.indexOf( "Pretest" ) != -1 )  { addTest( exp_struct, mode, "Pretest", questions_test["Pretest"] ); }
+    
+    // return the experiment structure
+    return( exp_struct );
+    
+}
+
+function makeExpStructPart2( condVariation, condVersion, yokingSeq, sections, mode ) {
+
+    // generate test stimuli according to experimental condition
+    // these are generated in advance because the randomization decisions made are shared across sections
+    var questions_test      = generateTestQuestionSets( condTestSeq );
+    
+    // construct the experiment structure using the retrieved stimuli
+    var exp_struct = [];
     if ( sections.indexOf( "Training" ) != -1 ) { addTraining( exp_struct, mode, condVariation, condVersion, yokingSeq ); }
     if ( sections.indexOf( "Posttest" ) != -1 ) { addTest( exp_struct, mode, "Posttest", questions_test["Posttest"] ); }
     if ( sections.indexOf( "Background" ) != -1 ) { addBackground( exp_struct, mode ); }
