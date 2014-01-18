@@ -75,7 +75,7 @@ function showEntrancePage() {
             console.log( "index.html running experiment test." );
             offline     = true;
             testing     = true;
-            mode        = "auto";
+            mode        = "free";
 //            sections    = [ "Training" ];
             sections    = [ "Intro", "Pretest", "Training", "Posttest", "Background" ];
             proceed();
@@ -197,9 +197,10 @@ function assignParameters() {
         randomAssignment();
         runExperimentPart2();
     } else {
-        console.log( "index.html > assignParameters running online." );
+        // pretest_accuracy must have been assigned a value for this to work!
+        console.log( "index.html > assignParameters running online. pretest_accuracy: " + pretest_accuracy );
         $.ajax({ type: 'post', cache: false, url: 'assign_parameters.php',
-            data: { 'table': table, 'subjid': subjid },
+            data: { 'table': table, 'subjid': subjid, 'pretest_accuracy': pretest_accuracy },
             success: function(data) {
                 console.log( "index.html > assignParameters > php script succeeded. output follows: " + data );
                 var parameters  = $.parseJSON( data );

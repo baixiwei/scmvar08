@@ -1,9 +1,8 @@
 <?php
 
 // global variables
-$table              = $_POST['table'];              // name of mysql table where experiment data is stored
-$subjid             = $_POST['subjid'];             // participant id
-$pretest            = $_POST['pretest_accuracy'];   // accuracy on pretest
+$table              = $_POST['table'];  // name of mysql table where experiment data is stored
+$subjid             = $_POST['subjid']; // participant id
 // $table              = 'scmvar_08_test';
 // $subjid             = (string)(rand(0,10000000));
 $numcond            = 4;                // experimental conditions
