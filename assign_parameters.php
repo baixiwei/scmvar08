@@ -1,17 +1,16 @@
 <?php
 
 // global variables
-$table              = $_POST['table'];              // name of mysql table where experiment data is stored
-$subjid             = $_POST['subjid'];             // participant id
-$pretest            = $_POST['pretest_accuracy'];   // accuracy on pretest
+$table              = $_POST['table'];  // name of mysql table where experiment data is stored
+$subjid             = $_POST['subjid']; // participant id
 // $table              = 'scmvar_08_test';
 // $subjid             = (string)(rand(0,10000000));
 $numcond            = 4;                // experimental conditions
 $NONVARIED          = 0;
 $ADAPTIVE_VARIED    = 1;
 $YOKED_VARIED       = 2;
-$YOKED_INTERLEAVED  = 3;
-$numsubcond         = 2;                // determines training version
+$YOKED_INTERLEAVED     = 3;
+$numsubcond         = 6;                // combinations of version & sequence variables
 
 
 // connect to the database and create table if it doesn't exist
@@ -63,10 +62,10 @@ function weightedSelect( $weights ) {
 // assign selection weight to each condition
 function getWeightsCond() {
 
-    global $table, $numcond, $pretest, $NONVARIED, $ADAPTIVE_VARIED, $YOKED_VARIED, $YOKED_INTERLEAVED;
+    global $table, $numcond, $NONVARIED, $ADAPTIVE_VARIED, $YOKED_VARIED, $YOKED_INTERLEAVED;
 
-    $assigned   = getAssignedCond( $table, $numcond, $pretest );
-    $completed  = getCompletedCond( $table, $numcond, $pretest );
+    $assigned   = getAssignedCond( $table, $numcond );
+    $completed  = getCompletedCond( $table, $numcond );
     
     $weights    = array_fill( 0, $numcond, 0 );
     // yoked conditions may only be selected if they have been assigned fewer times than the number of completions in the adaptive varied condition,
@@ -98,9 +97,9 @@ function getWeightsCond() {
 // assign selection weight to each subcondition, given a condition
 function getWeightsSubcond( $condition ) {
 
-    global $table, $pretest, $numsubcond;
+    global $table, $numsubcond;
 
-    $assigned   = getAssignedSubcond( $table, $pretest, $condition, $numsubcond );
+    $assigned   = getAssignedSubcond( $table, $condition, $numsubcond );
     $min_assn   = min( $assigned );
     $weights    = array_fill( 0, $numsubcond, 0 );
     for ( $i=0; $i<$numsubcond; $i++ ) {
@@ -133,18 +132,14 @@ function getWeightsYoking( $condition ) {
         
 }
 
-// find out how many times each condition has been assigned within the current level of pretest performance
-function getAssignedCond( $table, $numcond, $pretest ) {
+// find out how many times each condition has been assigned
+function getAssignedCond( $table, $numcond ) {
     
     // create array to hold # assigned per condition
     $assigned = array_fill( 0, $numcond, 0 );
     
-    // query database to get actual number assigned per condition within the current level of pretest performance
-    if ( $pretest <= 0.5 ) {
-        $query      = 'SELECT `condition`, COUNT(DISTINCT `subjid`) FROM '.mysql_real_escape_string($table).' WHERE `pretest_accuracy`<=0.5 GROUP BY `condition`';
-    } else {
-        $query      = 'SELECT `condition`, COUNT(DISTINCT `subjid`) FROM '.mysql_real_escape_string($table).' WHERE `pretest_accuracy`>0.5 GROUP BY `condition`';
-    }
+    // query database to get actual number assigned per condition
+    $query      = 'SELECT `condition`, COUNT(DISTINCT `subjid`) FROM '.mysql_real_escape_string($table).' GROUP BY `condition`';
     $result     = mysql_query($query);
     while ( $row = mysql_fetch_array($result) ) {
         $assigned[intval($row['condition'])] = intval($row['COUNT(DISTINCT `subjid`)']);
@@ -155,18 +150,15 @@ function getAssignedCond( $table, $numcond, $pretest ) {
 
 }
 
-// find out how many times each condition has been completed within the current level of pretest performance
-function getCompletedCond( $table, $numcond, $pretest ) {
+// find out how many times each condition has been completed
+function getCompletedCond( $table, $numcond ) {
     
     // create array to hold # complete per condition
     $completed = array_fill( 0, $numcond, 0 );
     
-    // query database to get actual number completed per condition within the current level of pretest performance
-    if ( $pretest <= 0.5 ) {
-        $query      = 'SELECT `condition`, COUNT(DISTINCT `subjid`) FROM '.mysql_real_escape_string($table).' WHERE (`end` is not null)&&(`pretest_accuracy`<=0.5) GROUP BY `condition`';
-    } else {
-        $query      = 'SELECT `condition`, COUNT(DISTINCT `subjid`) FROM '.mysql_real_escape_string($table).' WHERE (`end` is not null)&&(`pretest_accuracy`>0.5) GROUP BY `condition`';
-    }
+    // query database to get actual number completed per condition
+    // $query      = 'SELECT `condition`, COUNT(DISTINCT `subjid`) FROM '.mysql_real_escape_string($table).' WHERE `section`="Background" GROUP BY `condition`';
+    $query      = 'SELECT `condition`, COUNT(DISTINCT `subjid`) FROM '.mysql_real_escape_string($table).' WHERE `end` is not null GROUP BY `condition`';
     $result     = mysql_query($query);
     while ( $row = mysql_fetch_array($result) ) {
         $completed[intval($row['condition'])] = intval($row['COUNT(DISTINCT `subjid`)']);
@@ -177,18 +169,14 @@ function getCompletedCond( $table, $numcond, $pretest ) {
 
 }
 
-// find out how many times each subcondition has been assigned within a given condition within the current level of pretest performance
-function getAssignedSubcond( $table, $pretest, $condition, $numsubcond ) {
+// find out how many times each subcondition has been assigned within a given condition
+function getAssignedSubcond( $table, $condition, $numsubcond ) {
 
     // create array to hold # complete per subcondition within given condition
     $assigned = array_fill( 0, $numsubcond, 0 );
 
-    // query database to get actual number complete per subcondition within given condition within the current level of pretest performance
-    if ( $pretest <= 0.5 ) {
-        $query      = 'SELECT `subcondition`, COUNT(DISTINCT `subjid`) FROM '.mysql_real_escape_string($table).' WHERE (`condition`='.$condition.')&&(`pretest_accuracy`<=0.5) GROUP BY `subcondition`';
-    } else {
-        $query      = 'SELECT `subcondition`, COUNT(DISTINCT `subjid`) FROM '.mysql_real_escape_string($table).' WHERE (`condition`='.$condition.')&&(`pretest_accuracy`>0.5) GROUP BY `subcondition`';
-    }
+    // query database to get actual number complete per subcondition within given condition
+    $query      = 'SELECT `subcondition`, COUNT(DISTINCT `subjid`) FROM '.mysql_real_escape_string($table).' WHERE `condition`='.$condition.' GROUP BY `subcondition`';
     $result     = mysql_query($query);
     while ( $row = mysql_fetch_array($result) ) {
         $assigned[intval($row['subcondition'])] = intval($row['COUNT(DISTINCT `subjid`)']);
