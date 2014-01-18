@@ -205,18 +205,10 @@ function alertBox( target, content, callback ) {
             trial.question  = trial.selector.select( block.trial_idx, block.data.slice(0,block.trial_idx) );   
             
             // variables used to specify page content
-            var text_list, ans_list, key_list, trial_data, num_ques;
+            var text_list, ans_list, key_list, num_ques;
             
             // variables used to record user data
-            var start_time, responses, accuracies, valid, falsetries=0;
-            
-            // // in the training plugin, the question is instantiated at run time
-            // trial.question.instantiate( "Training", block.trial_idx );
-            // text_list   = trial.question.text_list;
-            // ans_list    = trial.question.ans_list;
-            // key_list    = trial.question.key_list;
-            // trial_data  = trial.question.data;
-            // num_ques    = text_list.length;
+            var trial_data, start_time, responses, accuracies, valid, falsetries=0;
             
             var writePage = function() {
                 // in the training plugin, the question is instantiated at run time
@@ -224,8 +216,9 @@ function alertBox( target, content, callback ) {
                 text_list   = trial.question.text_list;
                 ans_list    = trial.question.ans_list;
                 key_list    = trial.question.key_list;
-                trial_data  = trial.question.data;
                 num_ques    = text_list.length;
+                // if this is the first time the question was instantiated, record its data to trial_data
+                trial_data  = (trial_data==undefined) ? trial.question.data : trial_data;
                 // generate content and write to $this
                 var content = "";
                 if ( trial.progress ) {
@@ -267,16 +260,6 @@ function alertBox( target, content, callback ) {
                     $('#submit_button').unbind( 'click', nextPage );
                     setTimeout( function(){block.next();}, trial.timing );
                 }
-                /*
-                // remove any leftover feedback from a previous submission
-                if ( trial.feedback ) {
-                    for ( var i=0; i<num_ques; i++ ) {
-                        $('#radio_options_'+i+'_wrapper').removeClass( "incorrect" );
-                        $('#radio_options_'+i+'_feedback').removeClass( "incorrect_feedback" );
-                        $('#radio_options_'+i+'_feedback').html( "" );
-                    }
-                }
-                */
                 // get user input
                 responses   = new Array( num_ques );
                 accuracies  = new Array( num_ques );
