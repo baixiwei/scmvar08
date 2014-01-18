@@ -45,7 +45,7 @@ function showEntrancePage() {
         assignParameters();
     }
 //    var run = ( gup('run')!=undefined ) ? gup('run') : 'normal';
-    var run = ( gup('run')!="" ) ? gup('run') : 'test';
+    var run = ( gup('run')!="" ) ? gup('run') : 'normal';
     switch ( run ) {
         case 'normal' :     // default settings for live experiment
             console.log( "index.html running live experiment." );
@@ -61,10 +61,13 @@ function showEntrancePage() {
             console.log( "index.html running experiment test." );
             offline     = false;
             testing     = true;
-            mode        = "forced";
+            mode        = "free";
 //            sections    = [ "Training" ];
             sections    = [ "Intro", "Pretest", "Training", "Posttest", "Background" ];
-            proceed();
+//            proceed();
+            $('#target').html( entrance_nonturk );
+            $("#nextPageButton").click( proceed );
+            $("#nextPageButton").val( "Click Here to Start" );
             break;
         case 'dashboard' :  // let the user choose
             console.log( "index.html displaying test dashboard." );
