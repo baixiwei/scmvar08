@@ -31,7 +31,7 @@ function makeExpStructPart1( condTestSeq, sections, mode ) {
     
 }
 
-function makeExpStructPart2( condVariation, condVersion, yokingSeq, sections, mode ) {
+function makeExpStructPart2( condTestSeq, condVariation, condVersion, yokingSeq, sections, mode ) {
 
     // generate test stimuli according to experimental condition
     // these are generated in advance because the randomization decisions made are shared across sections

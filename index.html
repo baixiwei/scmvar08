@@ -59,7 +59,7 @@ function showEntrancePage() {
         runExperimentPart1();
     }
 //    var run = ( gup('run')!=undefined ) ? gup('run') : 'normal';
-    var run = ( gup('run')!="" ) ? gup('run') : 'test';
+    var run = ( gup('run')!="" ) ? gup('run') : 'simulation';
     switch ( run ) {
         case 'normal' :     // default settings for live experiment
             console.log( "index.html running live experiment." );
@@ -126,7 +126,7 @@ function showEntrancePage() {
                 proceed();
             }
             console.log( "index.html running simulation, index=" + sim_idx + "." );
-            offline     = false;
+            offline     = true;
             testing     = true;
             mode        = "auto";
             sections    = [ "Intro", "Pretest", "Training", "Posttest", "Background" ];
@@ -224,7 +224,7 @@ function runExperimentPart2() {
     console.log( "index.html > runExperimentPart2 starting. condVariation: " + condVariation + "; condVersion: " + condVersion + "; yokingSeq: " + yokingSeq );
 
     // create experiment structure for part 2
-    var exp_struct  = makeExpStructPart2( condVariation, condVersion, yokingSeq, sections, mode );
+    var exp_struct  = makeExpStructPart2( condTestSeq, condVariation, condVersion, yokingSeq, sections, mode );
     console.log( "index.html > runExperiment > runExperimentPart2 > exp_struct length " + exp_struct.length );
 
     // run part 2, then save data and end the experiment
@@ -251,7 +251,8 @@ function runExperimentPart2() {
             // save final data to database and finish
             console.log( "index.html > runExperiment jsPsych run complete. final data follows." );
             console.log( JSON.stringify(final_data) );
-            if ( offline ) {
+//            if ( offline ) {
+            if ( false ) {
                 console.log( "index.html > runExperiment in offline mode, skipping data submission." );
                 showExitPage( JSON.stringify(final_data) );
             } else {
@@ -292,7 +293,7 @@ function prependData( subjdata, expdata ) {
 
 function showExitPage( data ) {
     if ( sim_idx!=undefined ) {
-        if ( sim_idx<6 ) {
+        if ( sim_idx>=15 ) {
             $('#target').append( '<br>Done.')
         } else {
             showEntrancePage();
